@@ -27,7 +27,7 @@ namespace Roome_BackEnd.DAL
                 throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
             }
 
-            SqlConnection con = new SqlConnection(cStr);
+            SqlConnection con = new(cStr);
             con.Open();
             return con;
         }
@@ -36,10 +36,10 @@ namespace Roome_BackEnd.DAL
         {
             using (SqlConnection con = connect())
             {
-                using (SqlCommand cmd = new SqlCommand("SELECT * FROM AbstractApartment WHERE ID = @ApartmentID", con))
+                using (SqlCommand cmd = new("SELECT * FROM AbstractApartment WHERE ID = @ApartmentID", con))
                 {
                     cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
-                    
+
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -60,8 +60,8 @@ namespace Roome_BackEnd.DAL
                                 (int)reader["UserID"],
                                 (int)reader["Floor"],
                                 reader["Description"].ToString() ?? "",
-                                0, 
-                                false 
+                                0,
+                                false
                             );
                         }
                     }
@@ -74,7 +74,7 @@ namespace Roome_BackEnd.DAL
         {
             using (SqlConnection con = connect())
             {
-                using (SqlCommand cmd = new SqlCommand("DeleteRentalApartment", con))
+                using (SqlCommand cmd = new("DeleteRentalApartment", con))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
@@ -82,7 +82,7 @@ namespace Roome_BackEnd.DAL
                     try
                     {
                         int rowsAffected = cmd.ExecuteNonQuery();
-                        return rowsAffected > 0; 
+                        return rowsAffected > 0;
                     }
                     catch (Exception ex)
                     {
@@ -91,6 +91,223 @@ namespace Roome_BackEnd.DAL
                 }
             }
         }
+        //get all shared apartments
+
+        public List<SharedApartment> GetAllSharedApartments()
+        {
+            List<SharedApartment> sharedApartments = new();
+
+            using (SqlConnection con = connect())
+            {
+                using (SqlCommand cmd = CreateCommandWithStoredProcedure("GetAllSharedApartments", con))
+                {
+                    using (SqlDataReader dataReader = cmd.ExecuteReader())
+                    {
+                        while (dataReader.Read())
+                        {
+                          
+                             int numberOfRoommates = dataReader["NumberOfRoommates"] == DBNull.Value ? 0 : Convert.ToInt32(dataReader["NumberOfRoommates"]);
+                    DateTime entryDate = dataReader["EntryDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dataReader["EntryDate"]);
+                    DateTime exitDate = dataReader["ExitDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dataReader["ExitDate"]);
+#pragma warning disable CS8604 // Possible null reference argument.
+                            SharedApartment sharedApartment = new(
+                            Convert.ToInt32(dataReader["ApartmentID"]),
+                            Convert.ToInt32(dataReader["Price"]),
+                            Convert.ToInt32(dataReader["AmountOfRooms"]),
+                            Convert.ToString(dataReader["Location"]),
+                            Convert.ToBoolean(dataReader["AllowPet"]),
+                            Convert.ToBoolean(dataReader["AllowSmoking"]),
+                            Convert.ToBoolean(dataReader["GardenBalcony"]),
+                            Convert.ToInt32(dataReader["ParkingSpace"]),
+                            entryDate,
+                            exitDate,
+                            Convert.ToInt32(dataReader["PropertyTypeID"]),
+                            Convert.ToInt32(dataReader["UserID"]),
+                            Convert.ToInt32(dataReader["Floor"]),
+                            Convert.ToString(dataReader["Description"]),
+                            numberOfRoommates  
+                        );
+
+                            sharedApartments.Add(sharedApartment);
+                        }
+                    }
+                }
+            }
+
+            return sharedApartments;
+        }
+
+        private SqlCommand CreateCommandWithStoredProcedure(string spName, SqlConnection con)
+        {
+            SqlCommand cmd = new(spName, con);
+            cmd.CommandTimeout = 30;
+            cmd.CommandType = CommandType.StoredProcedure;
+            return cmd;
+        }
+
+        //get Rental Apartments
+
+        public List<RentalApartment> GetAllRentalApartments()
+        {
+            List<RentalApartment> rentalApartments = new();
+
+            try
+            {
+                using (SqlConnection con = connect())
+                {
+                    using (SqlCommand cmd = CreateCommandWithStoredProceduregetAllRentalApartments("GetAllRentalApartments", con))
+                    {
+                        try
+                        {
+                            using (SqlDataReader dataReader = cmd.ExecuteReader())
+                            {
+                                while (dataReader.Read())
+                                {
+#pragma warning disable CS8604 // Possible null reference argument.
+                                    RentalApartment rentalApartment = new(
+                                    Convert.ToInt32(dataReader["id"]),
+                                    Convert.ToInt32(dataReader["price"]),
+                                    Convert.ToInt32(dataReader["amountOfRooms"]),
+                                    Convert.ToString(dataReader["location"]),
+                                    Convert.ToBoolean(dataReader["allowPet"]),
+                                    Convert.ToBoolean(dataReader["allowSmoking"]),
+                                    Convert.ToBoolean(dataReader["gardenBalcony"]),
+                                    Convert.ToInt32(dataReader["parkingSpace"]),
+                                    Convert.ToDateTime(dataReader["entryDate"]),
+                                    Convert.ToDateTime(dataReader["exitDate"]),
+                                    Convert.ToBoolean(dataReader["isActive"]),
+                                    Convert.ToInt32(dataReader["propertyTypeID"]),
+                                    Convert.ToInt32(dataReader["userID"]),
+                                    Convert.ToInt32(dataReader["floor"]),
+                                    Convert.ToString(dataReader["description"]),
+                                    Convert.ToInt32(dataReader["contractLength"]),
+                                    Convert.ToBoolean(dataReader["extensionPossible"])
+                                );
+#pragma warning restore CS8604 
+
+                                    rentalApartments.Add(rentalApartment);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Exception("Error fetching rental apartments", ex);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to connect to database", ex);
+            }
+
+            return rentalApartments;
+        }
+
+
+
+        private SqlCommand CreateCommandWithStoredProceduregetAllRentalApartments(String spName, SqlConnection con)
+        {
+
+            SqlCommand cmd = new(); // create the command object
+
+            cmd.Connection = con;              // assign the connection to the command object
+
+            cmd.CommandText = spName;      // can be Select, Insert, Update, Delete 
+
+            cmd.CommandTimeout = 30;           // Time to wait for the execution' The default is 30 seconds
+
+            cmd.CommandType = System.Data.CommandType.StoredProcedure; // the type of the command, can also be text
+
+
+            return cmd;
+        }
+        // Add New Shared Apartment 
+        public int AddNewSharedApartment(SharedApartment apartment)
+        {
+            SqlConnection con;
+            SqlCommand cmd;
+
+            try
+            {
+                con = connect();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to connect to database", ex);
+            }
+
+            cmd = CreateCommandWithStoredProcedureAddNewRentalApartment(
+                "AddNewSharedApartment", con,
+                apartment.UserID,
+                apartment.Price,
+                apartment.AmountOfRooms,
+                apartment.Location,
+                apartment.AllowPet,
+                apartment.AllowSmoking,
+                apartment.GardenBalcony,
+                apartment.ParkingSpace,
+                apartment.EntryDate,
+                apartment.ExitDate,
+                apartment.IsActive,
+                apartment.PropertyTypeID,
+                apartment.Floor,
+                apartment.Description
+            );
+
+            try
+            {
+                // return new apartment id
+                object result = cmd.ExecuteScalar();
+                int newApartmentId = (result != null && result != DBNull.Value) ? Convert.ToInt32(result) : 0;
+                return newApartmentId;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to execute stored procedure", ex);
+            }
+            finally
+            {
+                con?.Close();
+            }
+        }
+
+        // creatr function for Stored Procedure
+        private SqlCommand CreateCommandWithStoredProcedureAddNewRentalApartment(
+            string spName, SqlConnection con,
+            int userID, int price, int amountOfRooms, string location,
+            bool allowPet, bool allowSmoking, bool gardenBalcony, int parkingSpace,
+            DateTime entryDate, DateTime exitDate, bool isActive, int propertyTypeID,
+            int floor, string description
+            )
+        {
+            SqlCommand cmd = new()
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@UserID", userID);
+            cmd.Parameters.AddWithValue("@Price", price);
+            cmd.Parameters.AddWithValue("@AmountOfRooms", amountOfRooms);
+            cmd.Parameters.AddWithValue("@Location", location);
+            cmd.Parameters.AddWithValue("@AllowPet", allowPet);
+            cmd.Parameters.AddWithValue("@AllowSmoking", allowSmoking);
+            cmd.Parameters.AddWithValue("@GardenBalcony", gardenBalcony);
+            cmd.Parameters.AddWithValue("@ParkingSpace", parkingSpace);
+            cmd.Parameters.AddWithValue("@EntryDate", entryDate);
+            cmd.Parameters.AddWithValue("@ExitDate", exitDate);
+            cmd.Parameters.AddWithValue("@IsActive", isActive);
+            cmd.Parameters.AddWithValue("@PropertyTypeID", propertyTypeID);
+            cmd.Parameters.AddWithValue("@Floor", floor);
+            cmd.Parameters.AddWithValue("@Description", description);
+
+            return cmd;
+        }
+
+
 
         // Add New Rental Apartment
         public int AddNewRentalApartment(RentalApartment apartment)
@@ -108,22 +325,22 @@ namespace Roome_BackEnd.DAL
             }
 
             cmd = CreateCommandWithStoredProcedureAddNewRentalApartment(
-                "AddNewRentalApartment", con, 
-                apartment.UserID,  
-                apartment.Price, 
-                apartment.AmountOfRooms, 
-                apartment.Location, 
-                apartment.AllowPet, 
-                apartment.AllowSmoking, 
-                apartment.GardenBalcony, 
-                apartment.ParkingSpace, 
-                apartment.EntryDate, 
-                apartment.ExitDate, 
-                apartment.IsActive, 
-                apartment.PropertyTypeID, 
-                apartment.Floor, 
-                apartment.Description, 
-                apartment.ContractLength, 
+                "AddNewRentalApartment", con,
+                apartment.UserID,
+                apartment.Price,
+                apartment.AmountOfRooms,
+                apartment.Location,
+                apartment.AllowPet,
+                apartment.AllowSmoking,
+                apartment.GardenBalcony,
+                apartment.ParkingSpace,
+                apartment.EntryDate,
+                apartment.ExitDate,
+                apartment.IsActive,
+                apartment.PropertyTypeID,
+                apartment.Floor,
+                apartment.Description,
+                apartment.ContractLength,
                 apartment.ExtensionPossible
             );
 
@@ -146,13 +363,13 @@ namespace Roome_BackEnd.DAL
 
         // creatr function for Stored Procedure
         private SqlCommand CreateCommandWithStoredProcedureAddNewRentalApartment(
-            string spName, SqlConnection con, 
-            int userID, int price, int amountOfRooms, string location, 
-            bool allowPet, bool allowSmoking, bool gardenBalcony, int parkingSpace, 
-            DateTime entryDate, DateTime exitDate, bool isActive, int propertyTypeID, 
+            string spName, SqlConnection con,
+            int userID, int price, int amountOfRooms, string location,
+            bool allowPet, bool allowSmoking, bool gardenBalcony, int parkingSpace,
+            DateTime entryDate, DateTime exitDate, bool isActive, int propertyTypeID,
             int floor, string description, int contractLength, bool extensionPossible)
         {
-            SqlCommand cmd = new SqlCommand
+            SqlCommand cmd = new()
             {
                 Connection = con,
                 CommandText = spName,
