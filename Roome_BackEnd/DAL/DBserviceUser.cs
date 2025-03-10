@@ -18,207 +18,202 @@ namespace Roome_BackEnd.DAL
                 .Build();
         }
 
-        public SqlConnection connect()
-        {
-            string? cStr = configuration.GetConnectionString("myProjDB");
+public SqlConnection connect()
+{
+    string? cStr = configuration.GetConnectionString("myProjDB");
 
-            if (string.IsNullOrEmpty(cStr))
-            {
-                throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
-            }
+    if (string.IsNullOrEmpty(cStr))
+    {
+        throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
+    }
 
-            SqlConnection con = new SqlConnection(cStr);
-            con.Open();
-            return con;
-        }
-    //--------------------------------------------------------------------------------------------------
+    return new SqlConnection(cStr); // ✅ נחזיר חיבור מוכן אבל לא נפתח אותו כאן
+}
+
     // This method add new user
     //--------------------------------------------------------------------------------------------------
 
-    public int AddNewUser(User user)
-        {
-        SqlConnection con;
-        SqlCommand cmd;
-
+   public int AddNewUser(User user)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber, 
+        user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke))
+    {
         try
         {
-            con = connect();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to connect to database", ex);
-        }
+            con.Open();
+            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(outputParam);
 
-        cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber, 
-            user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke);
-
-    
-        SqlParameter rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int);
-        rowsAffectedParam.Direction = ParameterDirection.Output;
-        cmd.Parameters.Add(rowsAffectedParam);
-
-        try
-        {
             cmd.ExecuteNonQuery();
-            int numEffected = (int)cmd.Parameters["@RowsAffected"].Value;
+
+            int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
+
+            if (numEffected == 0)
+            {
+                Console.WriteLine("Failed to add user. Email might already exist.");
+            }
+            else
+            {
+                Console.WriteLine($"User added successfully. Rows affected: {numEffected}");
+            }
+
             return numEffected;
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error: {ex.Message}");
             throw new Exception("Failed to execute stored procedure", ex);
         }
-        finally
-        {
-            con?.Close();
-        }
     }
+}
+
       //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to add new user
     //---------------------------------------------------------------------------------
 
-     private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
-                string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-                char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke)
+    private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
+        string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
+        char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke)
+    {
+        SqlCommand cmd = new SqlCommand
         {
-                SqlCommand cmd = new SqlCommand
-                {
-                    Connection = con,
-                    CommandText = spName,
-                    CommandTimeout = 10,
-                    CommandType = CommandType.StoredProcedure
-                };
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
 
-                cmd.Parameters.AddWithValue("@Email", Email);
-                cmd.Parameters.AddWithValue("@FullName", FullName);
-                cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
-                cmd.Parameters.AddWithValue("@Gender", Gender); // תיקון: בלי רווח
-                cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
-                cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture);
-                cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
-                cmd.Parameters.AddWithValue("@Smoke", Smoke);
+        cmd.Parameters.AddWithValue("@Email", Email);
+        cmd.Parameters.AddWithValue("@FullName", FullName);
+        cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
+        cmd.Parameters.AddWithValue("@Gender", Gender);
+        cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
+        cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
+        cmd.Parameters.AddWithValue("@Smoke", Smoke);
 
-                return cmd;
-        }
+        return cmd;
+    }
+
 
 
     //--------------------------------------------------------------------------------------------------
     // This method get user deatils by email
     //--------------------------------------------------------------------------------------------------
 
-    public User GetUser(string useremail)
+        public User GetUser(string useremail)
         {
-        SqlConnection con;
-        SqlCommand cmd;
-
-        try
-        {
-            con = connect();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to connect to database", ex);
-        }
-
-        cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con,useremail);
-
-
-        try
-        {
-            SqlDataReader dataReader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
-            dynamic user= new User();
-            while (dataReader.Read())
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con, useremail))
             {
-                user.Email=Convert.ToString(dataReader["Email"]);
-                user.FullName=Convert.ToString(dataReader["FullName"]);
-                user.PhoneNumber=Convert.ToInt32(dataReader["PhoneNumber"]);
-                user.Gender=Convert.ToChar(dataReader["Sex"]);
-                user.ProfilePicture=Convert.ToString(dataReader["ProfilePicture"]);
-                user.BirthDate=Convert.ToDateTime(dataReader["BirthDate"]);
-                user.Smoke=Convert.ToBoolean(dataReader["Smoke"]);
-                user.OwnPet=Convert.ToBoolean(dataReader["OwnPath"]);
+                try
+                {
+                    con.Open();
+                    using (SqlDataReader dataReader = cmd.ExecuteReader())
+                    {
+                        if (dataReader.Read())
+                        {
+                            return new User
+                            {
+                                ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
+                                Email = dataReader["Email"]?.ToString() ?? "",
+                                FullName = dataReader["FullName"]?.ToString() ?? "",
+                                PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
+                                Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
+                                ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
+                                BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
+                                Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
+                                OwnPet = dataReader["OwnPet"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPet"]) : false,
+                                IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                            };
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    throw new Exception("Failed to retrieve user", ex);
+                }
             }
-            return user;
+
+            return null; 
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to execute stored procedure", ex);
-        }
-        finally
-        {
-            con?.Close();
-        }
-    }
+
+
+
       //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to get user by email 
     //---------------------------------------------------------------------------------
 
-     private SqlCommand CreateCommandWithStoredProcedureGetUser(String spName, SqlConnection con,string useremail)
-    {
+     private SqlCommand CreateCommandWithStoredProcedureGetUser(String spName, SqlConnection con, string useremail)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
 
-        SqlCommand cmd = new SqlCommand(); // create the command object
+            cmd.Parameters.AddWithValue("@Email", useremail.Trim());
 
-        cmd.Connection = con;              // assign the connection to the command object
+            return cmd;
+        }
 
-        cmd.CommandText = spName;      // can be Select, Insert, Update, Delete 
-
-        cmd.CommandTimeout = 10;           // Time to wait for the execution' The default is 30 seconds
-
-        cmd.CommandType = System.Data.CommandType.StoredProcedure; // the type of the command, can also be text
-        cmd.Parameters.AddWithValue("@Email", useremail);
-
-        return cmd;
-    }
      //--------------------------------------------------------------------------------------------------
     // This method get all users
     //--------------------------------------------------------------------------------------------------
+    public List<User> GetAllUser()
+{
+    List<User> allUsers = new List<User>();
 
-    public List<dynamic> GetAllUser()
+    using (SqlConnection con = connect())
+    {
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetAllUsers("GetAllUsers", con))
         {
-        SqlConnection con;
-        SqlCommand cmd;
-
-        try
-        {
-            con = connect();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to connect to database", ex);
-        }
-
-        cmd = CreateCommandWithStoredProcedureGetAllUsers("GetAllUsers", con);
-
-        List<dynamic> allUsers = new List<dynamic>();
-        try
-        {
-            SqlDataReader dataReader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
-            
-            while (dataReader.Read())
+            try
             {
-                dynamic user= new User();
-                user.Email=Convert.ToString(dataReader["Email"]);
-                user.FullName=Convert.ToString(dataReader["FullName"]);
-                user.PhoneNumber=Convert.ToInt32(dataReader["PhoneNumber"]);
-                user.Gender=Convert.ToChar(dataReader["Sex"]);
-                user.ProfilePicture=Convert.ToString(dataReader["ProfilePicture"]);
-                user.BirthDate=Convert.ToDateTime(dataReader["BirthDate"]);
-                user.Smoke=Convert.ToBoolean(dataReader["Smoke"]);
-                user.OwnPet=Convert.ToBoolean(dataReader["OwnPath"]);
-                allUsers.Add(user);
+                con.Open(); 
+
+                using (SqlDataReader dataReader = cmd.ExecuteReader())
+                {
+                    while (dataReader.Read())
+                    {
+                        User user = new User
+                        {
+                            ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
+                            Email = dataReader["Email"]?.ToString() ?? "",
+                            FullName = dataReader["FullName"]?.ToString() ?? "",
+                            PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
+                            Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
+                            ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
+                            BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
+                            Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
+                            OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
+                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                        };
+
+                        allUsers.Add(user);
+                    }
+                }
             }
-            return allUsers;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to execute stored procedure", ex);
-        }
-        finally
-        {
-            con?.Close();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing GetAllUser: {ex.Message}");
+                throw new Exception("Failed to execute stored procedure", ex);
+            }
         }
     }
+
+    return allUsers;
+}
+
       //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to get user by email 
+    // Create the SqlCommand using a stored procedure to  get all users
     //---------------------------------------------------------------------------------
 
      private SqlCommand CreateCommandWithStoredProcedureGetAllUsers(String spName, SqlConnection con)
@@ -241,46 +236,35 @@ namespace Roome_BackEnd.DAL
     // This method change User Activity
     //--------------------------------------------------------------------------------------------------
 
-
-    public int DeactivateUser(string userEmail)
+public int DeactivateUser(string userEmail)
+{
+    using (SqlConnection con = connect()) 
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureDeactivateUser("DeactivateUser", con, userEmail))
     {
-
-        SqlConnection con = null;
-        SqlCommand cmd = null;
-        SqlParameter returnValue = new SqlParameter();
-       
-    
         try
         {
-            con = connect(); // create the connection
-
-            cmd = new SqlCommand("DeactivateUser", con); // Name of the stored procedure
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            // Add the email parameter
-            cmd.Parameters.AddWithValue("@Email", userEmail);
-
-            // Open connection
             con.Open();
 
-            // Execute the command and get the number of affected rows
-            int numEffected = cmd.ExecuteNonQuery();
+            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(outputParam);
 
-            return numEffected; // Return the number of affected rows (should be 1 if successful)
+            cmd.ExecuteNonQuery();
+
+            int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
+            Console.WriteLine($"Rows affected: {numEffected}");
+
+            return numEffected;
         }
         catch (Exception ex)
         {
-            // Log the error
-            throw ex;
-        }
-        finally
-        {
-            if (con != null)
-            {
-                con.Close(); // Ensure connection is closed
-            }
+            Console.WriteLine($"Error: {ex.Message}");
+            throw;
         }
     }
+}
 
     //---------------------------------------------------------------------------------
     //  Create the SqlCommand using a stored procedure to change user activiti 
@@ -311,69 +295,60 @@ namespace Roome_BackEnd.DAL
     //--------------------------------------------------------------------------------------------------
 
     public int UpdateUserDetailsByEmail(User user)
-        {
-        SqlConnection con;
-        SqlCommand cmd;
-
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsByEmail("UpdateUserDetailsByEmail", con, user))
+    {
         try
         {
-            con = connect();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to connect to database", ex);
-        }
+            con.Open();
+            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(outputParam);
 
-        cmd = CreateCommandWithStoredProcedureUpdateUserDetailsByEmail("UpdateUserDetailsByEmail", con, user.Email, user.FullName, user.PhoneNumber, 
-            user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke);
-
-    
-        SqlParameter rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int);
-        rowsAffectedParam.Direction = ParameterDirection.Output;
-        cmd.Parameters.Add(rowsAffectedParam);
-
-        try
-        {
             cmd.ExecuteNonQuery();
-            int numEffected = (int)cmd.Parameters["@RowsAffected"].Value;
+            int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
+            
+            Console.WriteLine($"🔄 Rows affected: {numEffected}");
             return numEffected;
         }
         catch (Exception ex)
         {
-            throw new Exception("Failed to execute stored procedure", ex);
-        }
-        finally
-        {
-            con?.Close();
+            Console.WriteLine($"Error: {ex.Message}");
+            throw new Exception("Failed to update user details", ex);
         }
     }
+}
+
       //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to Update User Details
     //---------------------------------------------------------------------------------
 
-     private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsByEmail(
-                string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-                char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke)
-        {
-                SqlCommand cmd = new SqlCommand
-                {
-                    Connection = con,
-                    CommandText = spName,
-                    CommandTimeout = 10,
-                    CommandType = CommandType.StoredProcedure
-                };
+    private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsByEmail(string spName, SqlConnection con, User user)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
 
-                cmd.Parameters.AddWithValue("@Email", Email);
-                cmd.Parameters.AddWithValue("@FullName", FullName);
-                cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
-                cmd.Parameters.AddWithValue("@Sex", Gender);
-                cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
-                cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture);
-                cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
-                cmd.Parameters.AddWithValue("@Smoke", Smoke);
+    cmd.Parameters.AddWithValue("@Email", user.Email.Trim());
+    cmd.Parameters.AddWithValue("@FullName", (object?)user.FullName ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@PhoneNumber", (object?)user.PhoneNumber ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Sex", (object?)user.Gender ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@BirthDate", user.BirthDate != DateTime.MinValue ? (object)user.BirthDate : DBNull.Value);
+    cmd.Parameters.AddWithValue("@ProfilePicture", (object?)user.ProfilePicture ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
 
-                return cmd;
-        }
+    return cmd;
+}
+
 
     }
 }

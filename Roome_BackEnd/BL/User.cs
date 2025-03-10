@@ -1,25 +1,27 @@
-using System.Net;
 using System;
-using Microsoft.VisualBasic;
+using System.Collections.Generic;
 using Roome_BackEnd.DAL;
-
 
 namespace Roome_BackEnd.BL
 {
     public class User
     {
-        string email="";
-        string fullName="";
-        string phoneNumber="";
-        Char gender;
-       DateTime birthDate;
-        string profilePicture="";
+        int id;
+        string email = "";
+        string fullName = "";
+        string phoneNumber = "";
+        char gender;
+        DateTime birthDate;
+        string profilePicture = "";
         bool ownPet;
         bool smoke;
+        bool isActive;
 
-        public User(){}
-        public User(string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke)
+        public User() { }
+
+        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive)
         {
+            ID = id;
             Email = email;
             FullName = fullName;
             PhoneNumber = phoneNumber;
@@ -28,8 +30,10 @@ namespace Roome_BackEnd.BL
             ProfilePicture = profilePicture;
             OwnPet = ownPet;
             Smoke = smoke;
+            IsActive = isActive;
         }
 
+        public int ID { get => id; set => id = value; }
         public string Email { get => email; set => email = value; }
         public string FullName { get => fullName; set => fullName = value; }
         public string PhoneNumber { get => phoneNumber; set => phoneNumber = value; }
@@ -38,13 +42,12 @@ namespace Roome_BackEnd.BL
         public string ProfilePicture { get => profilePicture; set => profilePicture = value; }
         public bool OwnPet { get => ownPet; set => ownPet = value; }
         public bool Smoke { get => smoke; set => smoke = value; }
+        public bool IsActive { get => isActive; set => isActive = value; }
 
         public int AddUser(User NewUser)
         {
-           DBserviceUser dBserviecesuser = new DBserviceUser();
-
-            int numEffected = dBserviecesuser.AddNewUser(NewUser);
-            return numEffected;
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.AddNewUser(NewUser);
         }
 
         public User GetUser(string useremail)
@@ -52,24 +55,23 @@ namespace Roome_BackEnd.BL
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.GetUser(useremail);
         }
-        public static List<dynamic> GetAllUser()
-         {
+
+        public static List<User> GetAllUser()
+        {
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.GetAllUser();
-            
         }
 
-        public int DeactivateUser(User user){
-
+        public static int DeactivateUser(string userEmail)
+        {
             DBserviceUser dBserviecesuser = new DBserviceUser();
-            return dBserviecesuser.DeactivateUser(user.Email);
+            return dBserviecesuser.DeactivateUser(userEmail);
         }
-       
-       public int UpdateUserDetailsByEmail(User user)
-       {
-         DBserviceUser dBserviecesuser = new DBserviceUser();
-        return dBserviecesuser.UpdateUserDetailsByEmail(user);
-       }
-    }
 
+        public int UpdateUserDetailsByEmail(User user)
+        {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.UpdateUserDetailsByEmail(user);
+        }
+    }
 }
