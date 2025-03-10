@@ -19,6 +19,16 @@ namespace Roome_BackEnd.BL
         public int ContractLength { get => contractLength; set => contractLength = value; }
         public bool ExtensionPossible { get => extensionPossible; set => extensionPossible = value; }
         public int NumberOfRommates { get; internal set; }
+        public List<RentalApartment> GetApartment(){
+          DBserviceApartment dbService = new DBserviceApartment();
+          return dbService.GetAllRentalApartments();
+          
+}
+        public RentalApartment() : base(0, 0, 0, "", false, false, false, 0, DateTime.Now, DateTime.Now, true, 0, 0, 0, "")
+        {
+        ContractLength = 0;
+        ExtensionPossible = false;
+      }
 
         public override int AddApartment()
          {
@@ -33,6 +43,10 @@ namespace Roome_BackEnd.BL
           return dbservice.SoftDeleteRentalApartment(this.Id);
         }
 
+        public static implicit operator RentalApartment(SharedApartment v)
+        {
+            throw new NotImplementedException();
         }
+    }
     }
 

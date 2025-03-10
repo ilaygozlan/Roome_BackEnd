@@ -13,6 +13,18 @@ namespace Roome_BackEnd.Controllers
     public class ApartmentController : ControllerBase
     {
       
+        //GET RentalApartments
+        [HttpGet("GetRentalApartments")]
+        public IActionResult GetAllRentalApartments(){
+           RentalApartment rentalApartment = new RentalApartment(); 
+        return Ok(rentalApartment.GetApartment()); 
+        }
+       //GET SharedApartments
+        [HttpGet("GetSharedApartments")]
+        public IActionResult GetSharedApartments(){
+           SharedApartment sharedApartment = new SharedApartment(); 
+        return Ok(sharedApartment.GetSharedApartments()); 
+        }
 
         // POST add new rentalApartment to DB
         [HttpPost("AddRentalApartment")]
