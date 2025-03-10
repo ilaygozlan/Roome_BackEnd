@@ -46,7 +46,30 @@ namespace Roome_BackEnd.BL
             int numEffected = dBserviecesuser.AddNewUser(NewUser);
             return numEffected;
         }
+
+        public User GetUser(string useremail)
+        {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.GetUser(useremail);
+        }
+        public static List<dynamic> GetAllUser()
+         {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.GetAllUser();
+            
+        }
+
+        public int DeactivateUser(User user){
+
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.DeactivateUser(user.Email);
+        }
        
+       public int UpdateUserDetailsByEmail(User user)
+       {
+         DBserviceUser dBserviecesuser = new DBserviceUser();
+        return dBserviecesuser.UpdateUserDetailsByEmail(user);
+       }
     }
 
 }
