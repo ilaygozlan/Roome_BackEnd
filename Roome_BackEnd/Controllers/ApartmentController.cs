@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Dynamic;
 using Roome_BackEnd.BL;
 using Roome_BackEnd.DAL;
+using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 
 
 namespace Roome_BackEnd.Controllers
@@ -14,11 +15,18 @@ namespace Roome_BackEnd.Controllers
       
 
         // POST add new rentalApartment to DB
-        [HttpPost("AddApartment")]
+        [HttpPost("AddRentalApartment")]
         public int Post([FromBody] RentalApartment newApartment)
         {
             return newApartment.AddApartment();
         }
+        [HttpPost("AddSharedApartment")]
+
+        public int Post([FromBody] SharedApartment newApartment)
+        {
+            return newApartment.AddApartment();
+        }
+
         // put apartment to not active 
    [HttpPut("DeactivateApartment/{apartmentId}")]
 public IActionResult DeactivateApartment(int apartmentId)

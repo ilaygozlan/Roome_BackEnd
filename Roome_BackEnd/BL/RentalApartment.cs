@@ -18,7 +18,9 @@ namespace Roome_BackEnd.BL
             ExtensionPossible=extensionPossible;}
         public int ContractLength { get => contractLength; set => contractLength = value; }
         public bool ExtensionPossible { get => extensionPossible; set => extensionPossible = value; }
-       public override int AddApartment()
+        public int NumberOfRommates { get; internal set; }
+
+        public override int AddApartment()
          {
       DBserviceApartment dbService = new DBserviceApartment();
     return dbService.AddNewRentalApartment(this);
