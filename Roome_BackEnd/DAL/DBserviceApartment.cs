@@ -100,7 +100,7 @@ namespace Roome_BackEnd.DAL
 
         using (SqlConnection con = connect())
         {
-            using (SqlCommand cmd = CreateCommandWithStoredProcedure("GetAllSharedApartments", con))
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetAllSharedApartments("GetAllSharedApartments", con))
             {
                 using (SqlDataReader dataReader = cmd.ExecuteReader())
                 {
@@ -138,7 +138,7 @@ namespace Roome_BackEnd.DAL
         return sharedApartments;
     }
 
-        private SqlCommand CreateCommandWithStoredProcedure(string spName, SqlConnection con)
+        private SqlCommand CreateCommandWithStoredProcedureGetAllSharedApartments(string spName, SqlConnection con)
         {
             SqlCommand cmd = new(spName, con);
             cmd.CommandTimeout = 30;
@@ -397,5 +397,302 @@ namespace Roome_BackEnd.DAL
 
             return cmd;
         }
+
+
+
+
+        //--------------------------------------------------------------------------------------------------
+// This method adds a new Sublet Apartment
+//--------------------------------------------------------------------------------------------------
+public int AddNewSubletApartment(SubletApartment apartment)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewSubletApartment("AddNewSubletApartment", con, 
+        apartment.UserID, apartment.Price, apartment.AmountOfRooms, apartment.Location, apartment.AllowPet, 
+        apartment.AllowSmoking, apartment.GardenBalcony, apartment.ParkingSpace, apartment.EntryDate, apartment.ExitDate, 
+        apartment.IsActive, apartment.PropertyTypeID, apartment.Floor, apartment.Description, apartment.CanCancelWithoutPenalty, 
+        apartment.IsWholeProperty))
+    {
+        try
+        {
+           
+
+            object result = cmd.ExecuteScalar();
+            int newApartmentId = (result != null && result != DBNull.Value) ? Convert.ToInt32(result) : 0;
+            return newApartmentId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error: {ex.Message}");
+            throw new Exception("Failed to execute stored procedure", ex);
+        }
     }
+}
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to add a new Sublet Apartment
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureAddNewSubletApartment(
+    string spName, SqlConnection con, int userID, int price, int amountOfRooms, string location,
+    bool allowPet, bool allowSmoking, bool gardenBalcony, int parkingSpace, DateTime entryDate,
+    DateTime exitDate, bool isActive, int propertyTypeID, int floor, string description,
+    bool canCancelWithoutPenalty, bool isWholeProperty)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@UserID", userID);
+    cmd.Parameters.AddWithValue("@Price", price);
+    cmd.Parameters.AddWithValue("@AmountOfRooms", amountOfRooms);
+    cmd.Parameters.AddWithValue("@Location", location);
+    cmd.Parameters.AddWithValue("@AllowPet", allowPet);
+    cmd.Parameters.AddWithValue("@AllowSmoking", allowSmoking);
+    cmd.Parameters.AddWithValue("@GardenBalcony", gardenBalcony);
+    cmd.Parameters.AddWithValue("@ParkingSpace", parkingSpace);
+    cmd.Parameters.AddWithValue("@EntryDate", entryDate);
+    cmd.Parameters.AddWithValue("@ExitDate", exitDate);
+    cmd.Parameters.AddWithValue("@IsActive", isActive);
+    cmd.Parameters.AddWithValue("@PropertyTypeID", propertyTypeID);
+    cmd.Parameters.AddWithValue("@Floor", floor);
+    cmd.Parameters.AddWithValue("@Description", description ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@CanCancelWithoutPenalty", canCancelWithoutPenalty);
+    cmd.Parameters.AddWithValue("@IsWholeProperty", isWholeProperty);
+
+    return cmd;
+}
+
+
+
+//--------------------------------------------------------------------------------------------------
+// This method GET all Sublet Apartments
+//--------------------------------------------------------------------------------------------------
+public List<SubletApartment> GetAllSubletApartments()
+{
+    List<SubletApartment> subletApartments = new();
+
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetAllSubletApartments("GetAllSubletApartments", con))
+    {
+        try
+        {
+            using (SqlDataReader dataReader = cmd.ExecuteReader())
+            {
+                while (dataReader.Read())
+                {
+                   
+                    int apartmentID = dataReader["ApartmentID"] != DBNull.Value ? Convert.ToInt32(dataReader["ApartmentID"]) : 0;
+                    int price = dataReader["Price"] != DBNull.Value ? Convert.ToInt32(dataReader["Price"]) : 0;
+                    int amountOfRooms = dataReader["AmountOfRooms"] != DBNull.Value ? Convert.ToInt32(dataReader["AmountOfRooms"]) : 0;
+                    string location = dataReader["Location"]?.ToString() ?? "";
+                    bool allowPet = dataReader["AllowPet"] != DBNull.Value && Convert.ToBoolean(dataReader["AllowPet"]);
+                    bool allowSmoking = dataReader["AllowSmoking"] != DBNull.Value && Convert.ToBoolean(dataReader["AllowSmoking"]);
+                    bool gardenBalcony = dataReader["GardenBalcony"] != DBNull.Value && Convert.ToBoolean(dataReader["GardenBalcony"]);
+                    int parkingSpace = dataReader["ParkingSpace"] != DBNull.Value ? Convert.ToInt32(dataReader["ParkingSpace"]) : 0;
+                    DateTime entryDate = dataReader["EntryDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["EntryDate"]) : DateTime.MinValue;
+                    DateTime exitDate = dataReader["ExitDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["ExitDate"]) : DateTime.MinValue;
+                    bool isActive = dataReader["IsActive"] != DBNull.Value && Convert.ToBoolean(dataReader["IsActive"]);
+                    int propertyTypeID = dataReader["PropertyTypeID"] != DBNull.Value ? Convert.ToInt32(dataReader["PropertyTypeID"]) : 0;
+                    int userID = dataReader["UserID"] != DBNull.Value ? Convert.ToInt32(dataReader["UserID"]) : 0;
+                    int floor = dataReader["Floor"] != DBNull.Value ? Convert.ToInt32(dataReader["Floor"]) : 0;
+                    string description = dataReader["Description"]?.ToString() ?? "";
+                    bool canCancelWithoutPenalty = dataReader["CanCancelWithoutPenalty"] != DBNull.Value && Convert.ToBoolean(dataReader["CanCancelWithoutPenalty"]);
+                    bool isWholeProperty = dataReader["IsWholeProperty"] != DBNull.Value && Convert.ToBoolean(dataReader["IsWholeProperty"]);
+
+                
+                    SubletApartment subletApartment = new SubletApartment(
+                        apartmentID, price, amountOfRooms, location, allowPet, allowSmoking, gardenBalcony, parkingSpace,
+                        entryDate, exitDate, isActive, propertyTypeID, userID, floor, description, canCancelWithoutPenalty, isWholeProperty
+                    );
+
+                    subletApartments.Add(subletApartment);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($" Error: {ex.Message}");
+            throw new Exception("Failed to retrieve sublet apartments", ex);
+        }
+    }
+
+    return subletApartments;
+}
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to get all Sublet Apartments
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureGetAllSubletApartments(string spName, SqlConnection con)
+{
+    SqlCommand cmd = new SqlCommand(spName, con)
+    {
+        CommandTimeout = 30,
+        CommandType = CommandType.StoredProcedure
+    };
+    return cmd;
+}
+
+   //--------------------------------------------------------------------------------------------------
+// This method adds a new review for an apartment
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// This method adds a new review for an apartment
+//--------------------------------------------------------------------------------------------------
+/*public int PostApartmentReview(int apartmentId, int userId, string review, int rate)
+{
+    int reviewId = 0;
+
+    try
+    {
+        using (SqlConnection con = connect()) // Ensure connection is opened once
+        using (SqlCommand cmd = CreateCommandWithStoredProcedurePostApartmentReview("PostApartmentReview", con, apartmentId, userId, review, rate))
+        {
+            con.Open(); // Open connection only once before execution
+            object result = cmd.ExecuteScalar();
+
+            if (result != null && int.TryParse(result.ToString(), out reviewId))
+            {
+                return reviewId;  // Return the new review ID
+            }
+            else
+            {
+                throw new Exception("Failed to add review.");
+            }
+        }
+    }
+    catch (SqlException ex)
+    {
+        throw new Exception($"Database error: {ex.Message}");
+    }
+}
+
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to add a new review for an apartment
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedurePostApartmentReview(
+    string spName, SqlConnection con, int apartmentId, int userId, string review, int rate)
+{
+    SqlCommand cmd = new()
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+    cmd.Parameters.AddWithValue("@UserID", userId);
+    cmd.Parameters.AddWithValue("@Review", review ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@Rate", rate);
+
+    return cmd;
+}
+
+
+//--------------------------------------------------------------------------------------------------
+// This method retrieves all reviews for a specific apartment
+//--------------------------------------------------------------------------------------------------
+public List<ApartmentReview> GetApartmentReviews(int apartmentId)
+{
+    List<ApartmentReview> reviews = new();
+
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetApartmentReviews("GetApartmentReviews", con, apartmentId))
+    {
+        try
+        {
+            using (SqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    reviews.Add(new ApartmentReview
+                    {
+                        ReviewId = Convert.ToInt32(reader["ReviewId"]),
+                        ApartmentID = Convert.ToInt32(reader["ApartmentID"]),
+                        UserID = Convert.ToInt32(reader["UserID"]),
+                        ReviewText = reader["Review"]?.ToString() ?? "",
+                        Rate = Convert.ToInt32(reader["Rate"])
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($" Error: {ex.Message}");
+            throw new Exception("Failed to retrieve apartment reviews", ex);
+        }
+    }
+
+    return reviews;
+}
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to get all reviews of an apartment
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureGetApartmentReviews(
+    string spName, SqlConnection con, int apartmentId)
+{
+    SqlCommand cmd = new(spName, con)
+    {
+        CommandTimeout = 30,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+    return cmd;
+}
+//--------------------------------------------------------------------------------------------------
+// This method deletes a review by reviewId
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// This method deletes a review by reviewId
+//--------------------------------------------------------------------------------------------------
+public bool DeleteReview(int reviewId)
+{
+    try
+    {
+        using (SqlConnection con = connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureDeleteReview("DeleteReview", con, reviewId))
+        {
+            con.Open(); // Open connection only once
+            int rowsAffected = cmd.ExecuteNonQuery();
+            return rowsAffected > 0;
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($" Error: {ex.Message}");
+        throw new Exception("Failed to execute stored procedure", ex);
+    }
+}
+
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to delete a review by reviewId
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureDeleteReview(
+    string spName, SqlConnection con, int reviewId)
+{
+    SqlCommand cmd = new(spName, con)
+    {
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@ReviewId", reviewId);
+
+    return cmd;
+}*/
+
+
+    }
+
+
+
 }
