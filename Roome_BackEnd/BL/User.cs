@@ -73,5 +73,41 @@ namespace Roome_BackEnd.BL
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.UpdateUserDetailsByEmail(user);
         }
+        public static string AddFriend(int userId1, int userId2)
+        {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.AddFriend(userId1, userId2);
+        }
+
+        public static List<User> GetUserFriends(int userId)
+            {
+                DBserviceUser dBserviecesuser = new DBserviceUser();
+                return dBserviecesuser.GetUserFriends(userId);
+            }
+
+        public static string RemoveFriend(int userId1, int userId2)
+            {
+                DBserviceUser dBserviecesuser = new DBserviceUser();
+                return dBserviecesuser.RemoveFriend(userId1, userId2);
+            }
+
+
+  
+
+        public static string LikeApartment(int userId, int apartmentId)
+        {
+            DBserviceUser dBserviceUser = new DBserviceUser();
+            return dBserviceUser.UserLikeApartment(userId, apartmentId);
+        }
+
+  
+   public static string RemoveLikeApartment(int userId, int apartmentId)
+   {
+       DBserviceUser dBserviceUser = new DBserviceUser();
+       return dBserviceUser.RemoveUserLikeApartment(userId, apartmentId);
+   }
+
+
     }
+    
 }

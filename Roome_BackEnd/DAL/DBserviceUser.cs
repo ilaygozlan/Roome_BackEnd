@@ -350,5 +350,240 @@ public int DeactivateUser(string userEmail)
 }
 
 
+   //--------------------------------------------------------------------------------------------------
+    // This method add friend 
+    //--------------------------------------------------------------------------------------------------
+
+public string AddFriend(int userId1, int userId2)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureAddFriend("AddFriend", con, userId1, userId2))
+    {
+        try
+        {
+            con.Open();
+            object result = cmd.ExecuteScalar();
+            return result != null ? result.ToString() : "Error adding friend";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($" Error: {ex.Message}");
+            throw new Exception("Failed to add friend", ex);
+        }
+    }
+}
+      //---------------------------------------------------------------------------------
+    // Create the SqlCommand using a stored procedure to add friend 
+    //---------------------------------------------------------------------------------
+
+private SqlCommand CreateCommandWithStoredProcedureAddFriend(string spName, SqlConnection con, int userId1, int userId2)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@UserID1", userId1);
+    cmd.Parameters.AddWithValue("@UserID2", userId2);
+
+    return cmd;
+}
+
+
+   //--------------------------------------------------------------------------------------------------
+    // This method Get User Friends
+    //--------------------------------------------------------------------------------------------------
+
+public List<User> GetUserFriends(int userId)
+{
+    List<User> friends = new List<User>();
+
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUserFriends("GetUserFriends", con, userId))
+    {
+        try
+        {
+            con.Open();
+            using (SqlDataReader dataReader = cmd.ExecuteReader())
+            {
+                while (dataReader.Read())
+                {
+                    User friend = new User
+                    {
+                        ID = Convert.ToInt32(dataReader["FriendID"]),
+                        Email = dataReader["Email"].ToString() ?? "",
+                        FullName = dataReader["FullName"].ToString() ?? "",
+                        PhoneNumber = dataReader["PhoneNumber"].ToString() ?? "",
+                        Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
+                        ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
+                        BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
+                        Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
+                        OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
+                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                    };
+
+                    friends.Add(friend);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw new Exception("Failed to retrieve user friends", ex);
+        }
+    }
+
+    return friends;
+}
+ //---------------------------------------------------------------------------------
+    // Create the SqlCommand using a stored procedure to Get User Friends
+    //---------------------------------------------------------------------------------
+
+private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName, SqlConnection con, int userId)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@UserID", userId);
+
+    return cmd;
+}
+
+   //--------------------------------------------------------------------------------------------------
+    // This method Get Remove Friends
+    //--------------------------------------------------------------------------------------------------
+
+    public string RemoveFriend(int userId1, int userId2)
+    {
+        using (SqlConnection con = connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureRemoveFriend("RemoveFriend", con, userId1, userId2))
+        {
+            try
+            {
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                return result != null ? result.ToString() : "Operation failed.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error: {ex.Message}");
+                throw new Exception("Failed to remove friend", ex);
+            }
+        }
+    }
+ //---------------------------------------------------------------------------------
+    // Create the SqlCommand using a stored procedure to RemoveFriend
+    //---------------------------------------------------------------------------------
+
+    private SqlCommand CreateCommandWithStoredProcedureRemoveFriend(string spName, SqlConnection con, int userId1, int userId2)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserID1", userId1);
+        cmd.Parameters.AddWithValue("@UserID2", userId2);
+
+        return cmd;
+    }
+
+       //--------------------------------------------------------------------------------------------------
+   // This method allows a user to like an apartment
+   //--------------------------------------------------------------------------------------------------
+
+   public string UserLikeApartment(int userId, int apartmentId)
+   {
+       using (SqlConnection con = connect())
+       using (SqlCommand cmd = CreateCommandWithStoredProcedureUserLikeApartment("sp_UserLikeApartment", con, userId, apartmentId))
+       {
+           try
+           {
+               con.Open();
+               cmd.ExecuteNonQuery();
+               return "Like added successfully";
+           }
+           catch (SqlException ex)
+           {
+               Console.WriteLine($"❌ Error: {ex.Message}");
+               throw new Exception("Failed to like the apartment", ex);
+           }
+       }
+   }
+
+   //---------------------------------------------------------------------------------
+   // Create the SqlCommand using a stored procedure to like an apartment
+   //---------------------------------------------------------------------------------
+
+   private SqlCommand CreateCommandWithStoredProcedureUserLikeApartment(string spName, SqlConnection con, int userId, int apartmentId)
+   {
+       SqlCommand cmd = new SqlCommand
+       {
+           Connection = con,
+           CommandText = spName,
+           CommandTimeout = 10,
+           CommandType = CommandType.StoredProcedure
+       };
+
+       cmd.Parameters.AddWithValue("@UserID", userId);
+       cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+       return cmd;
+   }
+   //--------------------------------------------------------------------------------------------------
+   // This method allows a user to remove a like from an apartment
+   //--------------------------------------------------------------------------------------------------
+
+   public string RemoveUserLikeApartment(int userId, int apartmentId)
+   {
+       using (SqlConnection con = connect())
+       using (SqlCommand cmd = CreateCommandWithStoredProcedureRemoveUserLikeApartment("sp_RemoveUserLikeApartment", con, userId, apartmentId))
+       {
+           try
+           {
+               con.Open();
+               cmd.ExecuteNonQuery();
+               return "Like removed successfully";
+           }
+           catch (SqlException ex)
+           {
+               Console.WriteLine($"❌ Error: {ex.Message}");
+               throw new Exception("Failed to remove like from the apartment", ex);
+           }
+       }
+   }
+
+   //---------------------------------------------------------------------------------
+   // Create the SqlCommand using a stored procedure to remove a like from an apartment
+   //---------------------------------------------------------------------------------
+
+   private SqlCommand CreateCommandWithStoredProcedureRemoveUserLikeApartment(string spName, SqlConnection con, int userId, int apartmentId)
+   {
+       SqlCommand cmd = new SqlCommand
+       {
+           Connection = con,
+           CommandText = spName,
+           CommandTimeout = 10,
+           CommandType = CommandType.StoredProcedure
+       };
+
+       cmd.Parameters.AddWithValue("@UserID", userId);
+       cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+       return cmd;
+   }
+
+
     }
 }

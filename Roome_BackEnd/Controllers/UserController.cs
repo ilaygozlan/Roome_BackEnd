@@ -107,13 +107,101 @@ namespace Roome_BackEnd.Controllers
 
         if (result == 0)
         {
-            Console.WriteLine("❌ No changes made or user not found.");
+            Console.WriteLine(" No changes made or user not found.");
             return NotFound("No changes made or user not found.");
         }
 
-        Console.WriteLine($"✅ User details updated successfully. Rows affected: {result}");
+        Console.WriteLine($"User details updated successfully. Rows affected: {result}");
         return Ok(result);
     }
+
+     //Add friend
+    [HttpPost("AddFriend")]
+    public ActionResult<string> PostAddFriend([FromBody] FriendRequest request)
+    {
+        if (request.UserID1 <= 0 || request.UserID2 <= 0)
+        {
+            return BadRequest("Invalid user IDs.");
+        }
+
+        string result = BL.User.AddFriend(request.UserID1, request.UserID2);
+
+        if (result.Contains("already friends"))
+        {
+            return Conflict(result);
+        }
+
+        return Ok(result);
+    }
+    //class FriendRequest
+    public class FriendRequest
+    {
+        public int UserID1 { get; set; }
+        public int UserID2 { get; set; }
+    }
+      //Get User Friends
+    [HttpGet("GetUserFriends/{userId}")]
+    public ActionResult<List<User>> GetUserFriends(int userId)
+    {
+        if (userId <= 0)
+        {
+            return BadRequest("Invalid user ID.");
+        }
+
+        List<User> friends = BL.User.GetUserFriends(userId);
+
+        if (friends == null || friends.Count == 0)
+        {
+            return NotFound("No friends found for this user.");
+        }
+
+        return Ok(friends);
+    }
+     //Remove Friend
+    [HttpDelete("RemoveFriend/{userId1}/{userId2}")]
+    public ActionResult<string> RemoveFriend(int userId1, int userId2)
+    {
+        if (userId1 <= 0 || userId2 <= 0)
+        {
+            return BadRequest("Invalid user IDs.");
+        }
+
+        string result = BL.User.RemoveFriend(userId1, userId2);
+
+        if (result == "These users are not friends")
+        {
+            return NotFound(result);
+        }
+
+        return Ok(result);
+    }
+    //Like Apartment
+    [HttpPost("LikeApartment/{userId}/{apartmentId}")]
+   public ActionResult<string> LikeApartment(int userId, int apartmentId)
+   {
+       if (userId <= 0 || apartmentId <= 0)
+       {
+           return BadRequest("Invalid User ID or Apartment ID.");
+       }
+
+       string result = BL.User.LikeApartment(userId, apartmentId);
+
+       return Ok(result);
+   }
+
+    //RemoveLikeApartment
+   [HttpDelete("RemoveLikeApartment/{userId}/{apartmentId}")]
+   public ActionResult<string> RemoveLikeApartment(int userId, int apartmentId)
+   {
+       if (userId <= 0 || apartmentId <= 0)
+       {
+           return BadRequest("Invalid User ID or Apartment ID.");
+       }
+
+       string result = BL.User.RemoveLikeApartment(userId, apartmentId);
+
+       return Ok(result);
+   }
 
 }
 
