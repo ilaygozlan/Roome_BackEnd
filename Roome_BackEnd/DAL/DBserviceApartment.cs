@@ -91,51 +91,52 @@ namespace Roome_BackEnd.DAL
                 }
             }
         }
-        //get all shared apartments
+       
 
-        public List<SharedApartment> GetAllSharedApartments()
+ //get all shared apartments
+       public List<SharedApartment> GetAllSharedApartments()
+    {
+        List<SharedApartment> sharedApartments = new();
+
+        using (SqlConnection con = connect())
         {
-            List<SharedApartment> sharedApartments = new();
-
-            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedure("GetAllSharedApartments", con))
             {
-                using (SqlCommand cmd = CreateCommandWithStoredProcedure("GetAllSharedApartments", con))
+                using (SqlDataReader dataReader = cmd.ExecuteReader())
                 {
-                    using (SqlDataReader dataReader = cmd.ExecuteReader())
+                    while (dataReader.Read())
                     {
-                        while (dataReader.Read())
-                        {
-                          
-                             int numberOfRoommates = dataReader["NumberOfRoommates"] == DBNull.Value ? 0 : Convert.ToInt32(dataReader["NumberOfRoommates"]);
-                    DateTime entryDate = dataReader["EntryDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dataReader["EntryDate"]);
-                    DateTime exitDate = dataReader["ExitDate"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dataReader["ExitDate"]);
-#pragma warning disable CS8604 // Possible null reference argument.
-                            SharedApartment sharedApartment = new(
-                            Convert.ToInt32(dataReader["ApartmentID"]),
-                            Convert.ToInt32(dataReader["Price"]),
-                            Convert.ToInt32(dataReader["AmountOfRooms"]),
-                            Convert.ToString(dataReader["Location"]),
-                            Convert.ToBoolean(dataReader["AllowPet"]),
-                            Convert.ToBoolean(dataReader["AllowSmoking"]),
-                            Convert.ToBoolean(dataReader["GardenBalcony"]),
-                            Convert.ToInt32(dataReader["ParkingSpace"]),
-                            entryDate,
-                            exitDate,
-                            Convert.ToInt32(dataReader["PropertyTypeID"]),
-                            Convert.ToInt32(dataReader["UserID"]),
-                            Convert.ToInt32(dataReader["Floor"]),
-                            Convert.ToString(dataReader["Description"]),
-                            numberOfRoommates  
+                        int apartmentID = dataReader["ApartmentID"] != DBNull.Value ? Convert.ToInt32(dataReader["ApartmentID"]) : 0;
+                        int price = dataReader["Price"] != DBNull.Value ? Convert.ToInt32(dataReader["Price"]) : 0;
+                        int amountOfRooms = dataReader["AmountOfRooms"] != DBNull.Value ? Convert.ToInt32(dataReader["AmountOfRooms"]) : 0;
+                        string location = dataReader["Location"]?.ToString() ?? "";
+                        bool allowPet = dataReader["AllowPet"] != DBNull.Value && Convert.ToBoolean(dataReader["AllowPet"]);
+                        bool allowSmoking = dataReader["AllowSmoking"] != DBNull.Value && Convert.ToBoolean(dataReader["AllowSmoking"]);
+                        bool gardenBalcony = dataReader["GardenBalcony"] != DBNull.Value && Convert.ToBoolean(dataReader["GardenBalcony"]);
+                        int parkingSpace = dataReader["ParkingSpace"] != DBNull.Value ? Convert.ToInt32(dataReader["ParkingSpace"]) : 0;
+                        DateTime entryDate = dataReader["EntryDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["EntryDate"]) : DateTime.MinValue;
+                        DateTime exitDate = dataReader["ExitDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["ExitDate"]) : DateTime.MinValue;
+                        bool isActive = dataReader["IsActive"] != DBNull.Value && Convert.ToBoolean(dataReader["IsActive"]);
+                        int propertyTypeID = dataReader["PropertyTypeID"] != DBNull.Value ? Convert.ToInt32(dataReader["PropertyTypeID"]) : 0;
+                        int userID = dataReader["UserID"] != DBNull.Value ? Convert.ToInt32(dataReader["UserID"]) : 0;
+                        int floor = dataReader["Floor"] != DBNull.Value ? Convert.ToInt32(dataReader["Floor"]) : 0;
+                        string description = dataReader["Description"]?.ToString() ?? "";
+                        int numberOfRoommates = dataReader["NumberOfRoommates"] != DBNull.Value ? Convert.ToInt32(dataReader["NumberOfRoommates"]) : 0;
+
+                    
+                        SharedApartment sharedApartment = new SharedApartment(
+                            apartmentID, price, amountOfRooms, location, allowPet, allowSmoking, gardenBalcony, parkingSpace, 
+                            entryDate, exitDate, isActive, propertyTypeID, userID, floor, description, numberOfRoommates
                         );
 
-                            sharedApartments.Add(sharedApartment);
-                        }
+                        sharedApartments.Add(sharedApartment);
                     }
                 }
             }
-
-            return sharedApartments;
         }
+
+        return sharedApartments;
+    }
 
         private SqlCommand CreateCommandWithStoredProcedure(string spName, SqlConnection con)
         {
