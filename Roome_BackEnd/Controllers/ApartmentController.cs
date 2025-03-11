@@ -97,6 +97,24 @@ public IActionResult GetApartmentById (int apartmentId)
                 return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
+        //edit shared apartment 
+        [HttpPut("EditSharedApartment")]
+        public IActionResult EditApartment(SharedApartment apartment){
+        bool result = ApartmentService.editApartment(apartment);
+        return Ok(result);
+        }
+        //edit rental apartment 
+        [HttpPut("EditRentalApartment")]
+        public IActionResult EditApartment(RentalApartment apartment){
+        bool result = ApartmentService.editApartment(apartment);
+        return Ok(result);
+        }
+        //edit sublet apartment 
+        [HttpPut("EditSubletApartment")]
+        public IActionResult EditSublet(SubletApartment apartment){
+        bool result = ApartmentService.EditApartment(apartment);
+        return Ok(result);
+        }
 
     }
 }
