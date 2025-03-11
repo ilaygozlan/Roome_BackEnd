@@ -174,72 +174,72 @@ namespace Roome_BackEnd.DAL
             return cmd;
         }
 
-        //--------------------------------------------------------------------------------------------------
-// This method retrieves all reviews for a specific apartment
-//--------------------------------------------------------------------------------------------------
-public List<Review> GetReviewsForApartment(int apartmentId)
-{
-    if (apartmentId <= 0)
+     //--------------------------------------------------------------------------------------------------
+    // This method retrieves all reviews for a specific apartment
+    //--------------------------------------------------------------------------------------------------
+    public List<Review> GetReviewsForApartment(int apartmentId)
     {
-        throw new ArgumentException("Invalid apartment ID.");
-    }
-
-    List<Review> reviews = new List<Review>();
-
-    using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetReviews("getReview", con, apartmentId))
-    {
-        try
+        if (apartmentId <= 0)
         {
-            Console.WriteLine($"Fetching reviews for Apartment ID={apartmentId}");
+            throw new ArgumentException("Invalid apartment ID.");
+        }
 
-            using (SqlDataReader reader = cmd.ExecuteReader())
+        List<Review> reviews = new List<Review>();
+
+        using (SqlConnection con = connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetReviews("getReview", con, apartmentId))
+        {
+            try
             {
-                while (reader.Read())
+                Console.WriteLine($"Fetching reviews for Apartment ID={apartmentId}");
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    reviews.Add(new Review
+                    while (reader.Read())
                     {
-                        ReviewId = reader.GetInt32(reader.GetOrdinal("reviewId")),
-                        ApartmentId = reader.GetInt32(reader.GetOrdinal("ApartmentID")),
-                        Rate = reader.GetInt32(reader.GetOrdinal("rate")),
-                        ReviewText = reader.GetString(reader.GetOrdinal("review")),
-                        UserId = reader.GetInt32(reader.GetOrdinal("UserID"))
-                    });
+                        reviews.Add(new Review
+                        {
+                            ReviewId = reader.GetInt32(reader.GetOrdinal("reviewId")),
+                            ApartmentId = reader.GetInt32(reader.GetOrdinal("ApartmentID")),
+                            Rate = reader.GetInt32(reader.GetOrdinal("rate")),
+                            ReviewText = reader.GetString(reader.GetOrdinal("review")),
+                            UserId = reader.GetInt32(reader.GetOrdinal("UserID"))
+                        });
+                    }
                 }
             }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine($"SQL Error: {sqlEx.Message}");
+                throw new Exception("Database error occurred", sqlEx);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                throw new Exception("Failed to retrieve reviews", ex);
+            }
         }
-        catch (SqlException sqlEx)
-        {
-            Console.WriteLine($"SQL Error: {sqlEx.Message}");
-            throw new Exception("Database error occurred", sqlEx);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            throw new Exception("Failed to retrieve reviews", ex);
-        }
+
+        return reviews;
     }
 
-    return reviews;
-}
-
-//---------------------------------------------------------------------------------
-// Create the SqlCommand using a stored procedure to get all reviews for an apartment
-//---------------------------------------------------------------------------------
-private SqlCommand CreateCommandWithStoredProcedureGetReviews(string spName, SqlConnection con, int apartmentId)
-{
-    SqlCommand cmd = new SqlCommand
+    //---------------------------------------------------------------------------------
+    // Create the SqlCommand using a stored procedure to get all reviews for an apartment
+    //---------------------------------------------------------------------------------
+    private SqlCommand CreateCommandWithStoredProcedureGetReviews(string spName, SqlConnection con, int apartmentId)
     {
-        Connection = con,
-        CommandText = spName,
-        CommandTimeout = 10,
-        CommandType = CommandType.StoredProcedure
-    };
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
 
-    cmd.Parameters.Add(new SqlParameter("@ApartmentID", SqlDbType.Int) { Value = apartmentId });
+        cmd.Parameters.Add(new SqlParameter("@ApartmentID", SqlDbType.Int) { Value = apartmentId });
 
-    return cmd;
-}
+        return cmd;
+    }
 
     }
 }
