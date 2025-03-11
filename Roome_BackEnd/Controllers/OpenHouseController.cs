@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Dynamic;
 using Roome_BackEnd.BL;
-using Roome_BackEnd.DAL;
 
 namespace Roome_BackEnd.Controllers
 {
@@ -10,28 +7,97 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class OpenHouseController : ControllerBase
     {
-
-     //Add friend
-    [HttpPost("CreateNewOpenHouse/{userId}")]
-    public ActionResult<string> CreateNewOpenHouse([FromBody] OpenHouse openHouse,[FromRoute] int userId)
-    {
-
-        if (userId <= 0 )
+        //---------------------------------------------------------------------------------
+        // This method creates a new open house event
+        //---------------------------------------------------------------------------------
+      [HttpPost("CreateNewOpenHouse/{userId}")]
+        public ActionResult<string> CreateNewOpenHouse([FromBody] OpenHouse openHouse, [FromRoute] int userId)
         {
-            return BadRequest("Invalid user IDs.");
+            if (userId <= 0)
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            int result = OpenHouse.CreateAnOpenHouse(openHouse, userId);
+
+            if (result == 0)
+            {
+                return Conflict("Open house already exists or failed to create.");
+            }
+
+            return Ok("New open house created successfully!");
         }
 
-        int result = OpenHouse.CreateAnOpenHouse(openHouse, userId);
 
-        if (result < 1)
+        //---------------------------------------------------------------------------------
+        // This method registers a user for an open house event
+        //---------------------------------------------------------------------------------
+        [HttpPost("RegisterForOpenHouse")]
+        public ActionResult<string> RegisterForOpenHouse([FromBody] RegisterOpenHouseRequest request)
         {
-            return Conflict("Didn't create new appartment.");
+            if (request.UserID <= 0 || request.OpenHouseID <= 0)
+            {
+                return BadRequest("Invalid user ID or open house ID.");
+            }
+
+            bool success = OpenHouse.RegisterForOpenHouse(request.OpenHouseID, request.UserID, request.Confirmed);
+
+            if (!success)
+            {
+                return Conflict("User is already registered or event does not exist.");
+            }
+
+            return Ok("User registered successfully for the open house.");
         }
 
-        return Ok("New open house create!");
+        
+        //---------------------------------------------------------------------------------
+        // This method Toggle Attendance for open house
+        //---------------------------------------------------------------------------------
+        [HttpPut("ToggleAttendance/{openHouseId}/{userId}")]
+        public ActionResult<string> ToggleAttendance([FromRoute] int openHouseId, [FromRoute] int userId)
+        {
+            if (openHouseId <= 0 || userId <= 0)
+            {
+                return BadRequest("Invalid Open House ID or User ID.");
+            }
+
+            bool result = OpenHouse.ToggleAttendance(openHouseId, userId);
+
+            if (!result)
+            {
+                return Conflict("Failed to update attendance status.");
+            }
+
+            return Ok("Attendance status updated successfully.");
+        }
+        
+        // DELETE: Delete open house
+        [HttpDelete("DeleteOpenHouse/{openHouseId}/{userId}")]
+        public ActionResult<string> DeleteOpenHouse([FromRoute] int openHouseId, [FromRoute] int userId)
+        {
+            if (openHouseId <= 0 || userId <= 0)
+            {
+                return BadRequest("Invalid Open House ID or User ID.");
+            }
+
+            bool result = OpenHouse.DeleteOpenHouse(openHouseId, userId);
+
+            if (!result)
+            {
+                return NotFound("Open house does not exist or user is not authorized.");
+            }
+
+            return Ok("Open house and all its registrations deleted successfully.");
+        }
+
     }
 
-}
-
-
+    // DTO for Open House Registration
+    public class RegisterOpenHouseRequest
+    {
+        public int OpenHouseID { get; set; }
+        public int UserID { get; set; }
+        public bool Confirmed { get; set; } = false;
+    }
 }

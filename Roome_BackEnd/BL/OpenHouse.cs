@@ -13,7 +13,7 @@ namespace Roome_BackEnd.BL
         public string EndTime { get; set; }
 
         // Constructor
-        public OpenHouse( int openHouseId, int apartmentId, DateTime date, int amountOfPeoples, string startTime, string endTime )
+        public OpenHouse(int openHouseId, int apartmentId, DateTime date, int amountOfPeoples, string startTime, string endTime)
         {
             OpenHouseId = openHouseId;
             ApartmentId = apartmentId;
@@ -23,9 +23,30 @@ namespace Roome_BackEnd.BL
             EndTime = endTime;
         }
 
-        public static int CreateAnOpenHouse(OpenHouse openHouse, int userId){
+        public static int CreateAnOpenHouse(OpenHouse openHouse, int userId)
+        {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.CreateAnOpenHouse(openHouse, userId);
         }
+
+     
+        public static bool RegisterForOpenHouse(int openHouseId, int userId, bool confirmed = false)
+        {
+            DBservicesOpenHouse dbService = new DBservicesOpenHouse();
+            return dbService.RegisterForOpenHouse(openHouseId, userId, confirmed);
+        }
+
+        public static bool ToggleAttendance(int openHouseId, int userId)
+        {
+            DBservicesOpenHouse dbService = new DBservicesOpenHouse();
+            return dbService.ToggleAttendance(openHouseId, userId);
+        }
+
+         public static bool DeleteOpenHouse(int openHouseId, int userId)
+        {
+            DBservicesOpenHouse dbService = new DBservicesOpenHouse();
+            return dbService.DeleteOpenHouse(openHouseId, userId);
+        }
+
     }
 }
