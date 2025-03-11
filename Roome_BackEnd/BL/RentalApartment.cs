@@ -35,13 +35,7 @@ namespace Roome_BackEnd.BL
       DBserviceApartment dbService = new DBserviceApartment();
     return dbService.AddNewRentalApartment(this);
 }
-        public override bool deleteApartment(){
-          if(this.Id<=0){
-            throw new ArgumentException("Invalid apartment Id to delete");
-          }
-          DBserviceApartment dbservice = new DBserviceApartment();
-          return dbservice.SoftDeleteRentalApartment(this.Id);
-        }
+     
 
         public static implicit operator RentalApartment(SharedApartment v)
         {

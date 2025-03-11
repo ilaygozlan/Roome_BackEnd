@@ -32,6 +32,106 @@ namespace Roome_BackEnd.DAL
             return con;
         }
 
+        //GetApartmentById
+        public AbstractApartment? GetApartmentById(int apartmentId)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand("sp_GetApartmentByID", con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+        using (SqlDataReader reader = cmd.ExecuteReader())
+        {
+            if (reader.Read()) 
+            {
+                int id = (int)reader["ApartmentID"];
+                int price = (int)reader["Price"];
+                int amountOfRooms = (int)reader["AmountOfRooms"];
+                string location = reader["Location"].ToString() ?? "";
+                bool allowPet = (bool)reader["AllowPet"];
+                bool allowSmoking = (bool)reader["AllowSmoking"];
+                bool gardenBalcony = (bool)reader["GardenBalcony"];
+                int parkingSpace = (int)reader["ParkingSpace"];
+                DateTime entryDate = (DateTime)reader["EntryDate"];
+                DateTime exitDate = (DateTime)reader["ExitDate"];
+                bool isActive = (bool)reader["IsActive"];
+                int propertyTypeID = (int)reader["PropertyTypeID"];
+                int userID = (int)reader["UserID"];
+                int floor = (int)reader["Floor"];
+                string description = reader["Description"].ToString() ?? "";
+
+                if (reader["Rental_ContractLength"] != DBNull.Value)
+                {
+                    int contractLength = (int)reader["Rental_ContractLength"];
+                    bool extensionPossible = (bool)reader["Rental_ExtensionPossible"];
+
+                    return new RentalApartment(
+                        id, price, amountOfRooms, location, allowPet, allowSmoking,
+                        gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
+                        propertyTypeID, userID, floor, description, contractLength, extensionPossible
+                    );
+                }
+                else if (reader["Shared_NumberOfRoommates"] != DBNull.Value)
+                {
+                    int numberOfRoommates = (int)reader["Shared_NumberOfRoommates"];
+
+                    return new SharedApartment(
+                        id, price, amountOfRooms, location, allowPet, allowSmoking,
+                        gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
+                        propertyTypeID, userID, floor, description, numberOfRoommates
+                    );
+                }
+                else if (reader["Sublet_CanCancelWithoutPenalty"] != DBNull.Value)
+                {
+                    bool canCancelWithoutPenalty = (bool)reader["Sublet_CanCancelWithoutPenalty"];
+                    bool isWholeProperty = (bool)reader["Sublet_IsWholeProperty"];
+
+                    return new SubletApartment(
+                        id, price, amountOfRooms, location, allowPet, allowSmoking,
+                        gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
+                        propertyTypeID, userID, floor, description, canCancelWithoutPenalty, isWholeProperty
+                    );
+                }
+            }
+        }
+    }
+
+    return null;
+}
+public bool ToggleApartmentActiveStatus(int apartmentId)
+{
+    try
+    {
+        using (SqlConnection con = connect())
+        {
+            using (SqlCommand command = new SqlCommand("ToggleApartmentActiveStatus", con))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())  
+                    {
+                        int rowsAffected = reader["RowsAffected"] != DBNull.Value ? Convert.ToInt32(reader["RowsAffected"]) : 0;
+                        Console.WriteLine($"SQL Update Affected Rows: {rowsAffected} for Apartment ID {apartmentId}");
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR in ToggleApartmentActiveStatus: {ex.Message}\n{ex.StackTrace}");
+        throw;
+    }
+
+    return false;
+}
+
+
         public RentalApartment? GetRentalApartmentById(int apartmentId)
         {
             using (SqlConnection con = connect())
@@ -70,28 +170,6 @@ namespace Roome_BackEnd.DAL
             return null;
         }
 
-        public bool SoftDeleteRentalApartment(int apartmentId)
-        {
-            using (SqlConnection con = connect())
-            {
-                using (SqlCommand cmd = new("DeleteRentalApartment", con))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
-
-                    try
-                    {
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        return rowsAffected > 0;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("Failed to execute stored procedure", ex);
-                    }
-                }
-            }
-        }
-       
 
  //get all shared apartments
        public List<SharedApartment> GetAllSharedApartments()
@@ -536,159 +614,164 @@ private SqlCommand CreateCommandWithStoredProcedureGetAllSubletApartments(string
     return cmd;
 }
 
-   //--------------------------------------------------------------------------------------------------
-// This method adds a new review for an apartment
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-// This method adds a new review for an apartment
-//--------------------------------------------------------------------------------------------------
-/*public int PostApartmentReview(int apartmentId, int userId, string review, int rate)
-{
-    int reviewId = 0;
-
-    try
-    {
-        using (SqlConnection con = connect()) // Ensure connection is opened once
-        using (SqlCommand cmd = CreateCommandWithStoredProcedurePostApartmentReview("PostApartmentReview", con, apartmentId, userId, review, rate))
+        internal SubletApartment? GetSubletApartmentById()
         {
-            con.Open(); // Open connection only once before execution
-            object result = cmd.ExecuteScalar();
-
-            if (result != null && int.TryParse(result.ToString(), out reviewId))
-            {
-                return reviewId;  // Return the new review ID
-            }
-            else
-            {
-                throw new Exception("Failed to add review.");
-            }
+            throw new NotImplementedException();
         }
-    }
-    catch (SqlException ex)
-    {
-        throw new Exception($"Database error: {ex.Message}");
-    }
-}
 
-
-//---------------------------------------------------------------------------------
-// Create the SqlCommand using a stored procedure to add a new review for an apartment
-//---------------------------------------------------------------------------------
-private SqlCommand CreateCommandWithStoredProcedurePostApartmentReview(
-    string spName, SqlConnection con, int apartmentId, int userId, string review, int rate)
-{
-    SqlCommand cmd = new()
-    {
-        Connection = con,
-        CommandText = spName,
-        CommandTimeout = 10,
-        CommandType = CommandType.StoredProcedure
-    };
-
-    cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
-    cmd.Parameters.AddWithValue("@UserID", userId);
-    cmd.Parameters.AddWithValue("@Review", review ?? (object)DBNull.Value);
-    cmd.Parameters.AddWithValue("@Rate", rate);
-
-    return cmd;
-}
-
-
-//--------------------------------------------------------------------------------------------------
-// This method retrieves all reviews for a specific apartment
-//--------------------------------------------------------------------------------------------------
-public List<ApartmentReview> GetApartmentReviews(int apartmentId)
-{
-    List<ApartmentReview> reviews = new();
-
-    using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetApartmentReviews("GetApartmentReviews", con, apartmentId))
-    {
-        try
+        //--------------------------------------------------------------------------------------------------
+        // This method adds a new review for an apartment
+        //--------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------
+        // This method adds a new review for an apartment
+        //--------------------------------------------------------------------------------------------------
+        /*public int PostApartmentReview(int apartmentId, int userId, string review, int rate)
         {
-            using (SqlDataReader reader = cmd.ExecuteReader())
+            int reviewId = 0;
+
+            try
             {
-                while (reader.Read())
+                using (SqlConnection con = connect()) // Ensure connection is opened once
+                using (SqlCommand cmd = CreateCommandWithStoredProcedurePostApartmentReview("PostApartmentReview", con, apartmentId, userId, review, rate))
                 {
-                    reviews.Add(new ApartmentReview
+                    con.Open(); // Open connection only once before execution
+                    object result = cmd.ExecuteScalar();
+
+                    if (result != null && int.TryParse(result.ToString(), out reviewId))
                     {
-                        ReviewId = Convert.ToInt32(reader["ReviewId"]),
-                        ApartmentID = Convert.ToInt32(reader["ApartmentID"]),
-                        UserID = Convert.ToInt32(reader["UserID"]),
-                        ReviewText = reader["Review"]?.ToString() ?? "",
-                        Rate = Convert.ToInt32(reader["Rate"])
-                    });
+                        return reviewId;  // Return the new review ID
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to add review.");
+                    }
                 }
             }
+            catch (SqlException ex)
+            {
+                throw new Exception($"Database error: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to add a new review for an apartment
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedurePostApartmentReview(
+            string spName, SqlConnection con, int apartmentId, int userId, string review, int rate)
         {
-            Console.WriteLine($" Error: {ex.Message}");
-            throw new Exception("Failed to retrieve apartment reviews", ex);
+            SqlCommand cmd = new()
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+            cmd.Parameters.AddWithValue("@UserID", userId);
+            cmd.Parameters.AddWithValue("@Review", review ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Rate", rate);
+
+            return cmd;
         }
-    }
 
-    return reviews;
-}
 
-//---------------------------------------------------------------------------------
-// Create the SqlCommand using a stored procedure to get all reviews of an apartment
-//---------------------------------------------------------------------------------
-private SqlCommand CreateCommandWithStoredProcedureGetApartmentReviews(
-    string spName, SqlConnection con, int apartmentId)
-{
-    SqlCommand cmd = new(spName, con)
-    {
-        CommandTimeout = 30,
-        CommandType = CommandType.StoredProcedure
-    };
-
-    cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
-
-    return cmd;
-}
-//--------------------------------------------------------------------------------------------------
-// This method deletes a review by reviewId
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-// This method deletes a review by reviewId
-//--------------------------------------------------------------------------------------------------
-public bool DeleteReview(int reviewId)
-{
-    try
-    {
-        using (SqlConnection con = connect())
-        using (SqlCommand cmd = CreateCommandWithStoredProcedureDeleteReview("DeleteReview", con, reviewId))
+        //--------------------------------------------------------------------------------------------------
+        // This method retrieves all reviews for a specific apartment
+        //--------------------------------------------------------------------------------------------------
+        public List<ApartmentReview> GetApartmentReviews(int apartmentId)
         {
-            con.Open(); // Open connection only once
-            int rowsAffected = cmd.ExecuteNonQuery();
-            return rowsAffected > 0;
+            List<ApartmentReview> reviews = new();
+
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetApartmentReviews("GetApartmentReviews", con, apartmentId))
+            {
+                try
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            reviews.Add(new ApartmentReview
+                            {
+                                ReviewId = Convert.ToInt32(reader["ReviewId"]),
+                                ApartmentID = Convert.ToInt32(reader["ApartmentID"]),
+                                UserID = Convert.ToInt32(reader["UserID"]),
+                                ReviewText = reader["Review"]?.ToString() ?? "",
+                                Rate = Convert.ToInt32(reader["Rate"])
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($" Error: {ex.Message}");
+                    throw new Exception("Failed to retrieve apartment reviews", ex);
+                }
+            }
+
+            return reviews;
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($" Error: {ex.Message}");
-        throw new Exception("Failed to execute stored procedure", ex);
-    }
-}
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to get all reviews of an apartment
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureGetApartmentReviews(
+            string spName, SqlConnection con, int apartmentId)
+        {
+            SqlCommand cmd = new(spName, con)
+            {
+                CommandTimeout = 30,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+
+            return cmd;
+        }
+        //--------------------------------------------------------------------------------------------------
+        // This method deletes a review by reviewId
+        //--------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------
+        // This method deletes a review by reviewId
+        //--------------------------------------------------------------------------------------------------
+        public bool DeleteReview(int reviewId)
+        {
+            try
+            {
+                using (SqlConnection con = connect())
+                using (SqlCommand cmd = CreateCommandWithStoredProcedureDeleteReview("DeleteReview", con, reviewId))
+                {
+                    con.Open(); // Open connection only once
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($" Error: {ex.Message}");
+                throw new Exception("Failed to execute stored procedure", ex);
+            }
+        }
 
 
-//---------------------------------------------------------------------------------
-// Create the SqlCommand using a stored procedure to delete a review by reviewId
-//---------------------------------------------------------------------------------
-private SqlCommand CreateCommandWithStoredProcedureDeleteReview(
-    string spName, SqlConnection con, int reviewId)
-{
-    SqlCommand cmd = new(spName, con)
-    {
-        CommandTimeout = 10,
-        CommandType = CommandType.StoredProcedure
-    };
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to delete a review by reviewId
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureDeleteReview(
+            string spName, SqlConnection con, int reviewId)
+        {
+            SqlCommand cmd = new(spName, con)
+            {
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
 
-    cmd.Parameters.AddWithValue("@ReviewId", reviewId);
+            cmd.Parameters.AddWithValue("@ReviewId", reviewId);
 
-    return cmd;
-}*/
+            return cmd;
+        }*/
 
 
     }

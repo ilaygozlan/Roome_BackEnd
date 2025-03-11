@@ -25,8 +25,7 @@ namespace Roome_BackEnd.BL
         public List<SharedApartment> GetSharedApartments(){
           DBserviceApartment dbService = new DBserviceApartment();
           return dbService.GetAllSharedApartments();}
-        public override bool deleteApartment(){
-            return true;}
+
             
     }
     }

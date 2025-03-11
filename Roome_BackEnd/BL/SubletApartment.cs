@@ -45,9 +45,6 @@ namespace Roome_BackEnd.BL
             return dbService.GetAllSubletApartments();
         }
 
-        public override bool deleteApartment()
-        {
-            return true; 
-        }
+    
     }
 }
