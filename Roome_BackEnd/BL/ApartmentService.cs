@@ -4,6 +4,12 @@ namespace Roome_BackEnd.BL
 {
     public class ApartmentService
     {
+
+        public static bool editApartment(AbstractApartment apartment){
+            DBserviceApartment _dbService=new DBserviceApartment();
+            return _dbService.EditApartment(apartment);
+
+        }
         public static AbstractApartment? GetApartmentById(int apartmentId){
         DBserviceApartment _dbService=new DBserviceApartment();
         if (apartmentId <= 0)
@@ -37,6 +43,10 @@ if(allSublet!= null){
          return allApartments;
 
     }
-        
-    }
+
+        internal static bool EditApartment(AbstractApartment updatedApartment)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
