@@ -12,7 +12,7 @@ namespace Roome_BackEnd.Controllers
     {
       
 
-        // POST add new user to DB
+       
         // POST add new user to DB
         [HttpPost("AddNewUser")]
         public ActionResult<int> PostAddNewUser([FromBody] User newUser)
@@ -38,17 +38,17 @@ namespace Roome_BackEnd.Controllers
             }
 
             string decodedEmail = Uri.UnescapeDataString(email.Trim());
-            Console.WriteLine($"🔍 Received request for user: '{decodedEmail}'");
+            Console.WriteLine($" Received request for user: '{decodedEmail}'");
 
             User user = new User().GetUser(decodedEmail);
 
             if (user == null)
             {
-                Console.WriteLine("❌ User not found.");
+                Console.WriteLine(" User not found.");
                 return NotFound("User not found.");
             }
 
-            Console.WriteLine($"✅ User found: {user.FullName}");
+            Console.WriteLine($"User found: {user.FullName}");
             return Ok(user);
         }
 
@@ -202,6 +202,53 @@ namespace Roome_BackEnd.Controllers
 
        return Ok(result);
    }
+    //Get User Liked Apartments
+        [HttpGet("GetUserLikedApartments/{userId}")]
+        public ActionResult<List<dynamic>> GetUserLikedApartments(int userId)
+        {
+            if (userId <= 0)
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            User user = new User();
+            List<dynamic> likedApartments = user.GetUserLikedApartments(userId);
+
+            if (likedApartments == null || likedApartments.Count == 0)
+            {
+                return NotFound("No liked apartments found for this user.");
+            }
+
+            return Ok(likedApartments);
+        }
+
+        // GET: api/User/GetUserOwnedApartments/{userId}
+        [HttpGet("GetUserOwnedApartments/{userId}")]
+        public ActionResult<List<dynamic>> GetUserOwnedApartments(int userId)
+        {
+            if (userId <= 0)
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            try
+            {
+                User user = new User();
+                var apartments = user.GetUserOwnedApartments(userId);
+
+                if (apartments == null || apartments.Count == 0)
+                {
+                    return NotFound("No owned apartments found for this user.");
+                }
+
+                return Ok(apartments);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return StatusCode(500, "Failed to retrieve owned apartments.");
+            }
+        }
 
 }
 

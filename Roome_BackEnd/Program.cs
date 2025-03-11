@@ -1,6 +1,6 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// הוספת CORS עם מדיניות
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",

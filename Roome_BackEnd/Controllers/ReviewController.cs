@@ -2,70 +2,70 @@ using Microsoft.AspNetCore.Mvc;
 using Roome_BackEnd.BL;
 using Roome_BackEnd.DAL;
 
-namespace Roome_BackEnd.Controllers
-{
+
+namespace Roome_BackEnd.Controllers{
     [Route("api/[controller]")]
     [ApiController]
-    public class ApartmentReviewController : ControllerBase
+    public class ReviewController : ControllerBase
     {
-        private readonly DBserviceApartment _dbService;
-
-        public ApartmentReviewController()
+        // POST add new review to DB
+        [HttpPost("AddNewReview")]
+        public ActionResult<int> PostAddNewReview([FromBody] Review newReview)
         {
-            _dbService = new DBserviceApartment();
-        }
-
-   
-       [HttpPost("AddReview")]
-        public IActionResult PostReview([FromBody] ApartmentReview review)
-        {
-            if (review == null || review.ApartmentID == 0 || review.UserID == 0)
-                return BadRequest("Invalid review data.");
-
-            try
+            if (newReview == null || newReview.ApartmentId <= 0 || newReview.UserId <= 0 || string.IsNullOrWhiteSpace(newReview.ReviewText) || newReview.Rate < 1 || newReview.Rate > 5)
             {
-                int result = _dbService.PostApartmentReview(review.ApartmentID, review.UserID, review.ReviewText, review.Rate);
-
-                if (result > 0)
-                    return Ok(new { message = "Review added successfully.", reviewId = result });
-                else
-                    return StatusCode(500, "Failed to add review.");
+                return BadRequest("Invalid review details.");
             }
-            catch (Exception ex)
+
+            int result = newReview.AddReview(newReview);
+
+            if (result <= 0)
             {
-                return StatusCode(500, new { error = ex.Message });
+                return Conflict("Review could not be added.");
             }
+
+            return Ok(result);
         }
-
-
-        
-        [HttpGet("GetReviews/{apartmentId}")]
-        public IActionResult GetReviews(int apartmentId)
-        {
-            if (apartmentId == 0)
-                return BadRequest("Invalid apartment ID.");
-
-            var reviews = _dbService.GetApartmentReviews(apartmentId);
-
-            if (reviews == null || reviews.Count == 0)
-                return NotFound("No reviews found for this apartment.");
-
-            return Ok(reviews);
-        }
-
-        
+        // delete review
         [HttpDelete("DeleteReview/{reviewId}")]
-        public IActionResult DeleteReview(int reviewId)
+        public ActionResult<int> DeleteReview(int reviewId)
         {
-            if (reviewId == 0)
+            if (reviewId <= 0)
+            {
                 return BadRequest("Invalid review ID.");
+            }
 
-            bool isDeleted = _dbService.DeleteReview(reviewId);
+            Review review = new Review();
+            int result = review.DeleteReview(reviewId);
 
-            if (isDeleted)
-                return Ok("Review deleted successfully.");
-            else
+            if (result == 0)
+            {
                 return NotFound("Review not found.");
+            }
+
+            return Ok("Review deleted successfully.");
         }
+
+
+          //Get Reviews For Apartment
+            [HttpGet("GetReviewsForApartment/{apartmentId}")]
+            public ActionResult<List<Review>> GetReviewsForApartment(int apartmentId)
+            {
+                if (apartmentId <= 0)
+                {
+                    return BadRequest("Invalid apartment ID.");
+                }
+
+                Review review = new Review();
+                List<Review> reviews = review.GetReviewsForApartment(apartmentId);
+
+                if (reviews == null || reviews.Count == 0)
+                {
+                    return NotFound("No reviews found for this apartment.");
+                }
+
+                return Ok(reviews);
+            }
+
     }
 }

@@ -3,7 +3,7 @@ using System.Data;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using Roome_BackEnd.BL;
-
+using System.Dynamic;
 namespace Roome_BackEnd.DAL
 {
     public class DBserviceUser
@@ -27,9 +27,9 @@ public SqlConnection connect()
         throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
     }
 
-    return new SqlConnection(cStr); // ✅ נחזיר חיבור מוכן אבל לא נפתח אותו כאן
+    return new SqlConnection(cStr);
 }
-
+    //--------------------------------------------------------------------------------------------------
     // This method add new user
     //--------------------------------------------------------------------------------------------------
 
@@ -474,7 +474,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
                 throw new Exception("Failed to remove friend", ex);
             }
         }
@@ -516,7 +516,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"❌ Error: {ex.Message}");
+               Console.WriteLine($"Error: {ex.Message}");
                throw new Exception("Failed to like the apartment", ex);
            }
        }
@@ -558,7 +558,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"❌ Error: {ex.Message}");
+               Console.WriteLine($"Error: {ex.Message}");
                throw new Exception("Failed to remove like from the apartment", ex);
            }
        }
@@ -584,6 +584,212 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
        return cmd;
    }
 
+        //--------------------------------------------------------------------------------------------------
+        // This method retrieves all apartments that a user has liked dynamically
+        //--------------------------------------------------------------------------------------------------
+        public List<dynamic> GetUserLikedApartments(int userId)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentException("Invalid user ID.");
+            }
+
+            List<dynamic> likedApartments = new List<dynamic>();
+
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUserLikedApartments("sp_GetUserLikedApartments", con, userId))
+            {
+                try
+                {
+                    Console.WriteLine($"Fetching liked apartments for User ID={userId}");
+
+                    con.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            dynamic apartment = new ExpandoObject();
+                            var apartmentDict = (IDictionary<string, object>)apartment;
+
+                            // Common properties from AbstractApartment
+                            apartmentDict["ApartmentID"] = reader["ApartmentID"];
+                            apartmentDict["Price"] = reader["Price"];
+                            apartmentDict["AmountOfRooms"] = reader["AmountOfRooms"];
+                            apartmentDict["Location"] = reader["Location"];
+                            apartmentDict["AllowPet"] = reader["AllowPet"];
+                            apartmentDict["AllowSmoking"] = reader["AllowSmoking"];
+                            apartmentDict["GardenBalcony"] = reader["GardenBalcony"];
+                            apartmentDict["ParkingSpace"] = reader["ParkingSpace"];
+                            apartmentDict["EntryDate"] = reader["EntryDate"];
+                            apartmentDict["ExitDate"] = reader["ExitDate"];
+                            apartmentDict["IsActive"] = reader["IsActive"];
+                            apartmentDict["OwnerUserID"] = reader["OwnerUserID"];
+                            apartmentDict["Floor"] = reader["Floor"];
+                            apartmentDict["Description"] = reader["Description"];
+                            apartmentDict["Images"] = reader["Images"] != DBNull.Value ? reader["Images"].ToString().Split(", ").ToList() : new List<string>();
+                            apartmentDict["Roommates"] = reader["Roommates"] != DBNull.Value ? reader["Roommates"].ToString() : null;
+
+                            // Determine apartment type based on joined tables
+                            if (reader["Shared_NumberOfRoommates"] != DBNull.Value) 
+                            {
+                                apartmentDict["ApartmentType"] = "SharedApartment";
+                                apartmentDict["NumberOfRoommates"] = reader["Shared_NumberOfRoommates"];
+                            }
+                            else if (reader["Rental_ContractLength"] != DBNull.Value) 
+                            {
+                                apartmentDict["ApartmentType"] = "RentalApartment";
+                                apartmentDict["ContractLength"] = reader["Rental_ContractLength"];
+                                apartmentDict["ExtensionPossible"] = reader["Rental_ExtensionPossible"];
+                            }
+                            else if (reader["Sublet_CanCancelWithoutPenalty"] != DBNull.Value) 
+                            {
+                                apartmentDict["ApartmentType"] = "SubletApartment";
+                                apartmentDict["CanCancelWithoutPenalty"] = reader["Sublet_CanCancelWithoutPenalty"];
+                                apartmentDict["IsWholeProperty"] = reader["Sublet_IsWholeProperty"];
+                            }
+
+                            likedApartments.Add(apartment);
+                        }
+                    }
+                }
+                catch (SqlException sqlEx)
+                {
+                    Console.WriteLine($"SQL Error: {sqlEx.Message}");
+                    throw new Exception("Database error occurred", sqlEx);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    throw new Exception("Failed to retrieve liked apartments", ex);
+                }
+            }
+
+            return likedApartments;
+        }
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to get all liked apartments for a user
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureGetUserLikedApartments(string spName, SqlConnection con, int userId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@UserID", SqlDbType.Int) { Value = userId });
+
+            return cmd;
+        }
+
+        //--------------------------------------------------------------------------------------------------
+// This method retrieves all apartments owned by a specific user dynamically
+//--------------------------------------------------------------------------------------------------
+        public List<dynamic> GetUserOwnedApartments(int userId)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentException("Invalid user ID.");
+            }
+
+            List<dynamic> ownedApartments = new List<dynamic>();
+
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUserOwnedApartments("sp_GetUserOwnedApartments", con, userId))
+            {
+                try
+                {
+                    con.Open(); // ✅ Ensure connection is open before reading data
+
+                    Console.WriteLine($"Fetching owned apartments for User ID={userId}");
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            dynamic apartment = new ExpandoObject();
+                            var apartmentDict = (IDictionary<string, object>)apartment;
+
+                            // Common properties from AbstractApartment
+                            apartmentDict["ApartmentID"] = reader["ApartmentID"];
+                            apartmentDict["Price"] = reader["Price"];
+                            apartmentDict["AmountOfRooms"] = reader["AmountOfRooms"];
+                            apartmentDict["Location"] = reader["Location"];
+                            apartmentDict["AllowPet"] = reader["AllowPet"];
+                            apartmentDict["AllowSmoking"] = reader["AllowSmoking"];
+                            apartmentDict["GardenBalcony"] = reader["GardenBalcony"];
+                            apartmentDict["ParkingSpace"] = reader["ParkingSpace"];
+                            apartmentDict["EntryDate"] = reader["EntryDate"];
+                            apartmentDict["ExitDate"] = reader["ExitDate"];
+                            apartmentDict["IsActive"] = reader["IsActive"];
+                            apartmentDict["UserID"] = reader["UserID"];
+                            apartmentDict["Floor"] = reader["Floor"];
+                            apartmentDict["Description"] = reader["Description"];
+                            apartmentDict["Images"] = reader["Images"] != DBNull.Value ? reader["Images"].ToString().Split(", ").ToList() : new List<string>();
+                            apartmentDict["Roommates"] = reader["Roommates"] != DBNull.Value ? reader["Roommates"].ToString() : null;
+
+                            // Determine apartment type based on joined tables
+                            if (reader["Shared_NumberOfRoommates"] != DBNull.Value)
+                            {
+                                apartmentDict["ApartmentType"] = "SharedApartment";
+                                apartmentDict["NumberOfRoommates"] = reader["Shared_NumberOfRoommates"];
+                            }
+                            else if (reader["Rental_ContractLength"] != DBNull.Value)
+                            {
+                                apartmentDict["ApartmentType"] = "RentalApartment";
+                                apartmentDict["ContractLength"] = reader["Rental_ContractLength"];
+                                apartmentDict["ExtensionPossible"] = reader["Rental_ExtensionPossible"];
+                            }
+                            else if (reader["Sublet_CanCancelWithoutPenalty"] != DBNull.Value)
+                            {
+                                apartmentDict["ApartmentType"] = "SubletApartment";
+                                apartmentDict["CanCancelWithoutPenalty"] = reader["Sublet_CanCancelWithoutPenalty"];
+                                apartmentDict["IsWholeProperty"] = reader["Sublet_IsWholeProperty"];
+                            }
+
+                            ownedApartments.Add(apartment);
+                        }
+                    }
+                }
+                catch (SqlException sqlEx)
+                {
+                    Console.WriteLine($"SQL Error: {sqlEx.Message}");
+                    throw new Exception("Database error occurred", sqlEx);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    throw new Exception("Failed to retrieve owned apartments", ex);
+                }
+            }
+
+            return ownedApartments;
+        }
+
+                //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to get all owned apartments for a user
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureGetUserOwnedApartments(string spName, SqlConnection con, int userId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@UserID", SqlDbType.Int) { Value = userId });
+
+            return cmd;
+        }
+
 
     }
 }
+
+
+ 
