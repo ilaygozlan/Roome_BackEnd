@@ -8,6 +8,16 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class ApartmentController : ControllerBase
     {
+        [HttpGet("GetAllApartments")]
+        public IActionResult GetAllApartments()
+        {
+            if(ApartmentService.GetAllApartments()==null){
+                return BadRequest("no apartments found");
+            }
+            return Ok(ApartmentService.GetAllApartments());
+        }
+
+        
         // GET RentalApartments
         [HttpGet("GetRentalApartments")]
         public IActionResult GetAllRentalApartments()
@@ -31,6 +41,20 @@ namespace Roome_BackEnd.Controllers
             SubletApartment subletApartment = new SubletApartment();
             return Ok(subletApartment.GetSubletApartments());
         }
+        [HttpGet("GetApartmentById/{apartmentId}")]
+        // Get Apartment By Id
+public IActionResult GetApartmentById (int apartmentId)
+{
+    AbstractApartment? apartment= ApartmentService.GetApartmentById(apartmentId);
+
+    if (apartment == null)
+    {
+        return NotFound($"Apartment with ID {apartmentId} not found.");
+    }
+
+    return Ok(apartment);
+}
+
 
         // POST add new rental apartment to DB
         [HttpPost("AddRentalApartment")]
@@ -38,6 +62,8 @@ namespace Roome_BackEnd.Controllers
         {
             return newApartment.AddApartment();
         }
+
+
 
         // POST add new shared apartment to DB
         [HttpPost("AddSharedApartment")]
@@ -53,25 +79,24 @@ namespace Roome_BackEnd.Controllers
             return newApartment.AddApartment();
         }
 
-        // PUT deactivate apartment (soft delete)
-        [HttpPut("DeactivateApartment/{apartmentId}")]
-        public IActionResult DeactivateApartment(int apartmentId)
+// PUT toggle active status for any apartment type
+[HttpPut("ToggleActive/{apartmentId}")]
+        public IActionResult ToggleApartmentActiveStatus(int apartmentId)
         {
-            DBserviceApartment dbService = new DBserviceApartment();
 
-            RentalApartment? apartment = dbService.GetRentalApartmentById(apartmentId);
-
-            if (apartment == null)
+            try
             {
-                return NotFound($"Apartment with ID {apartmentId} not found.");
+                if (apartmentId <= 0)
+                    return BadRequest("Invalid Apartment ID.");
+
+                string result = ApartmentService.ToggleApartmentActiveStatus(apartmentId);
+                return Ok(result);
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
 
-            bool isUpdated = dbService.SoftDeleteRentalApartment(apartmentId);
-
-            if (isUpdated)
-                return Ok($"Apartment with ID {apartmentId} has been deactivated.");
-            else
-                return StatusCode(500, "Failed to deactivate the apartment.");
-        }
     }
 }
