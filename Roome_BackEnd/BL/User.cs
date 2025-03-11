@@ -107,6 +107,23 @@ namespace Roome_BackEnd.BL
        return dBserviceUser.RemoveUserLikeApartment(userId, apartmentId);
    }
 
+    public List<dynamic> GetUserLikedApartments(int userId)
+        {
+            if (userId <= 0)
+            {
+                throw new ArgumentException("Invalid user ID.");
+            }
+
+            DBserviceUser dbServiceUser = new DBserviceUser();
+            return dbServiceUser.GetUserLikedApartments(userId);
+        }
+
+        public List<dynamic> GetUserOwnedApartments(int userId)
+        {
+            DBserviceUser dbService = new DBserviceUser();
+            return dbService.GetUserOwnedApartments(userId);
+        }
+
 
     }
     
