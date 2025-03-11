@@ -32,6 +32,77 @@ namespace Roome_BackEnd.DAL
             return con;
         }
 
+        //Edit Apartment
+        public bool EditApartment(AbstractApartment apartment)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand("EditApartment", con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+
+        cmd.Parameters.AddWithValue("@ApartmentID", apartment.Id);
+        cmd.Parameters.AddWithValue("@Price", (object?)apartment.Price ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@AmountOfRooms", (object?)apartment.AmountOfRooms ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Location", (object?)apartment.Location ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@AllowPet", (object?)apartment.AllowPet ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@AllowSmoking", (object?)apartment.AllowSmoking ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@GardenBalcony", (object?)apartment.GardenBalcony ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ParkingSpace", (object?)apartment.ParkingSpace ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@EntryDate", (object?)apartment.EntryDate ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ExitDate", (object?)apartment.ExitDate ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@IsActive", (object?)apartment.IsActive ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@PropertyTypeID", (object?)apartment.PropertyTypeID ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Floor", (object?)apartment.Floor ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Description", (object?)apartment.Description ?? DBNull.Value);
+
+        if (apartment is SharedApartment sharedApartment)
+        {
+            cmd.Parameters.AddWithValue("@NumberOfRoommates", (object?)sharedApartment.NumberOfRoommates ?? DBNull.Value);
+        }
+        else
+        {
+            cmd.Parameters.AddWithValue("@NumberOfRoommates", DBNull.Value);
+        }
+
+        if (apartment is SubletApartment subletApartment)
+        {
+            cmd.Parameters.AddWithValue("@CanCancelWithoutPenalty", (object?)subletApartment.CanCancelWithoutPenalty ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@IsWholeProperty", (object?)subletApartment.IsWholeProperty ?? DBNull.Value);
+        }
+        else
+        {
+            cmd.Parameters.AddWithValue("@CanCancelWithoutPenalty", DBNull.Value);
+            cmd.Parameters.AddWithValue("@IsWholeProperty", DBNull.Value);
+        }
+
+        if (apartment is RentalApartment rentalApartment)
+        {
+            cmd.Parameters.AddWithValue("@ContractLength", (object?)rentalApartment.ContractLength ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@ExtensionPossible", (object?)rentalApartment.ExtensionPossible ?? DBNull.Value);
+        }
+        else
+        {
+            cmd.Parameters.AddWithValue("@ContractLength", DBNull.Value);
+            cmd.Parameters.AddWithValue("@ExtensionPossible", DBNull.Value);
+        }
+
+         SqlParameter returnParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output
+        };
+        cmd.Parameters.Add(returnParam);
+
+        cmd.ExecuteNonQuery();
+
+cmd.ExecuteNonQuery();
+
+int rowsAffected = returnParam.Value != DBNull.Value ? Convert.ToInt32(returnParam.Value) : 0;
+
+        return rowsAffected > 0;
+    }
+}
+
+
         //GetApartmentById
         public AbstractApartment? GetApartmentById(int apartmentId)
 {
