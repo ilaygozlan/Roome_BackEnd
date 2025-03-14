@@ -19,5 +19,10 @@ public ApartmantImages(int id, string imageUrl, int apartmentId)
         public int Id { get => id; set => id = value; }
         public string ImageUrl { get => imageUrl; set => imageUrl = value; }
         public int ApartmentId { get => apartmentId; set => apartmentId = value; }
+
+        public static object UploadImages(string imagesLinks, int apartmentId){
+          DBserviceUploadImage dBservice = new DBserviceUploadImage();
+          return dBservice.UploadImages(imagesLinks, apartmentId);
+        }
     }
 }

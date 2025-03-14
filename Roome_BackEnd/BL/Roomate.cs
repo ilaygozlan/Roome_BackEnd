@@ -32,8 +32,9 @@ namespace Roome_BackEnd.BL
           DBserviceRoomates dBservice = new DBserviceRoomates();
           return dBservice.AddNewRoommates(roomates, apartmentId);
         }
-        public static bool DeleteRoommates(string roomates, int apartmentId){
-            
+        public static bool DeleteRoommate(string roomateName, int apartmentId){
+          DBserviceRoomates dBservice = new DBserviceRoomates();
+          return dBservice.DeleteRoommate(roomateName, apartmentId);
         }
     }
 }

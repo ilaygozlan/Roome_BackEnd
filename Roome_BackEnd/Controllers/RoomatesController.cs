@@ -12,15 +12,9 @@ namespace Roome_BackEnd.Controllers
     {
         private readonly DBserviceRoomates _dbService;
 
-        /// <summary>
-        /// Adds new roommates to an apartment.
-        /// </summary>
-        /// <param name="apartmentId">The ID of the apartment</param>
-        /// <param name="roommatesJson">A JSON string containing roommate details</param>
-        /// <returns>ActionResult indicating success or failure</returns>
         [HttpPost("AddNewRoomates")]
-    public IActionResult AddRoommates([FromQuery] int apartmentId, [FromBody] List<Roomate> roommates)
-    {
+        public IActionResult AddRoommates([FromQuery] int apartmentId, [FromBody] List<Roomate> roommates)
+        {
         if (roommates == null || roommates.Count == 0)
             {
                 return BadRequest("Roommates data is required.");
@@ -31,7 +25,24 @@ namespace Roome_BackEnd.Controllers
         bool isSuccess = Roomate.AddRoommates(roommatesJson, apartmentId);
 
         return isSuccess ? Ok("Roommates added successfully.") : StatusCode(500, "Failed to add roommates.");
-    }
+        }
 
+      [HttpDelete("DeleteRoommate/{appartmentId}")]
+        public ActionResult<string> DeleteOpenHouse([FromRoute] int appartmentId, [FromBody] string roommateName)
+        {
+            if (appartmentId <= 0 || appartmentId == null)
+            {
+                return BadRequest("Invalid appartment ID.");
+            }
+
+            bool result = Roomate.DeleteRoommate(roommateName, appartmentId);
+
+            if (!result)
+            {
+                return NotFound("Apartment does not exist or roommate.");
+            }
+
+            return Ok("Roommate deleted successfully.");
+        }
     }
 }

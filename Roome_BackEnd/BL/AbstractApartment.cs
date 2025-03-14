@@ -43,7 +43,6 @@ namespace Roome_BackEnd.BL
         public int Floor { get; set; }
         public string Description { get; set; }
         public abstract int AddApartment();
-       
     }
     
 }

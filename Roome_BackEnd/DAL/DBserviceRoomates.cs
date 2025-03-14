@@ -43,18 +43,15 @@ namespace Roome_BackEnd.DAL
             {
                 try
                 {
-                    cmd.ExecuteNonQuery();
-                    Console.WriteLine("Roommates added successfully.");
+                    cmd.ExecuteScalar();
                     return true;
                 }
                 catch (SqlException sqlEx)
                 {
-                    Console.WriteLine($"SQL Error: {sqlEx.Message}");
                     throw new Exception("Database error occurred", sqlEx);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
                     throw new Exception("Failed to execute stored procedure", ex);
                 }
             }
@@ -75,6 +72,54 @@ namespace Roome_BackEnd.DAL
 
             cmd.Parameters.Add(new SqlParameter("@ApartmentID", SqlDbType.Int) { Value = apartmentId });
             cmd.Parameters.Add(new SqlParameter("@RoommatesJSON", SqlDbType.NVarChar, -1) { Value = roommatesJson });
+
+            return cmd;
+        }
+
+        //--------------------------------------------------------------------------------------------------
+        // This method delete roommate
+        //--------------------------------------------------------------------------------------------------
+        public bool DeleteRoommate(string roommateName, int apartmentId)
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureDeleteRoommate("sp_DeleteRoommate", con, roommateName, apartmentId))
+            {
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    return (int)cmd.Parameters["@Result"].Value > 0;
+                }
+                catch (SqlException sqlEx)
+                {
+                    throw new Exception("Database error occurred", sqlEx);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to execute stored procedure", ex);
+                }
+            }
+        }
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to delete roommate
+        //---------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureDeleteRoommate(string spName, SqlConnection con, string roommateName, int apartmentId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+            // Output Parameter
+            SqlParameter resultParam = new SqlParameter("@Result", SqlDbType.Int)
+            {
+            Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(resultParam);
+            cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
+            cmd.Parameters.AddWithValue("@RoommateName", roommateName);
 
             return cmd;
         }
