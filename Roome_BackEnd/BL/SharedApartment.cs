@@ -26,6 +26,6 @@ namespace Roome_BackEnd.BL
           DBserviceApartment dbService = new DBserviceApartment();
           return dbService.GetAllSharedApartments();}
 
-            
+          
     }
     }
