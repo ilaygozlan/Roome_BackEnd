@@ -32,6 +32,34 @@ namespace Roome_BackEnd.DAL
             return con;
         }
 
+// get all active apartments
+   public List<Dictionary<string, object>> GetAllActiveApartments()
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("sp_GetAllActiveApartments", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    var result = new List<Dictionary<string, object>>();
+
+                    while (reader.Read())
+                    {
+                        var row = new Dictionary<string, object>();
+
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        }
+
+                        result.Add(row);
+                    }
+
+                    return result;
+                }
+            }
+        }
         //Edit Apartment
         public bool EditApartment(AbstractApartment apartment)
 {
@@ -140,7 +168,7 @@ int rowsAffected = returnParam.Value != DBNull.Value ? Convert.ToInt32(returnPar
                     return new RentalApartment(
                         id, price, amountOfRooms, location, allowPet, allowSmoking,
                         gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
-                        propertyTypeID, userID, floor, description, contractLength, extensionPossible
+                        propertyTypeID, userID, floor, description,0, contractLength, extensionPossible
                     );
                 }
                 else if (reader["Shared_NumberOfRoommates"] != DBNull.Value)
@@ -150,7 +178,7 @@ int rowsAffected = returnParam.Value != DBNull.Value ? Convert.ToInt32(returnPar
                     return new SharedApartment(
                         id, price, amountOfRooms, location, allowPet, allowSmoking,
                         gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
-                        propertyTypeID, userID, floor, description, numberOfRoommates
+                        propertyTypeID, userID, floor, description,1, numberOfRoommates
                     );
                 }
                 else if (reader["Sublet_CanCancelWithoutPenalty"] != DBNull.Value)
@@ -161,7 +189,7 @@ int rowsAffected = returnParam.Value != DBNull.Value ? Convert.ToInt32(returnPar
                     return new SubletApartment(
                         id, price, amountOfRooms, location, allowPet, allowSmoking,
                         gardenBalcony, parkingSpace, entryDate, exitDate, isActive,
-                        propertyTypeID, userID, floor, description, canCancelWithoutPenalty, isWholeProperty
+                        propertyTypeID, userID, floor, description,2, canCancelWithoutPenalty, isWholeProperty
                     );
                 }
             }
@@ -232,6 +260,7 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
                                 (int)reader["Floor"],
                                 reader["Description"].ToString() ?? "",
                                 0,
+                                0,
                                 false
                             );
                         }
@@ -275,7 +304,7 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
                     
                         SharedApartment sharedApartment = new SharedApartment(
                             apartmentID, price, amountOfRooms, location, allowPet, allowSmoking, gardenBalcony, parkingSpace, 
-                            entryDate, exitDate, isActive, propertyTypeID, userID, floor, description, numberOfRoommates
+                            entryDate, exitDate, isActive, propertyTypeID, userID, floor, description,1, numberOfRoommates
                         );
 
                         sharedApartments.Add(sharedApartment);
@@ -330,6 +359,7 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
                                     Convert.ToInt32(dataReader["userID"]),
                                     Convert.ToInt32(dataReader["floor"]),
                                     Convert.ToString(dataReader["description"]),
+                                    0,
                                     Convert.ToInt32(dataReader["contractLength"]),
                                     Convert.ToBoolean(dataReader["extensionPossible"])
                                 );
@@ -655,7 +685,7 @@ public List<SubletApartment> GetAllSubletApartments()
                 
                     SubletApartment subletApartment = new SubletApartment(
                         apartmentID, price, amountOfRooms, location, allowPet, allowSmoking, gardenBalcony, parkingSpace,
-                        entryDate, exitDate, isActive, propertyTypeID, userID, floor, description, canCancelWithoutPenalty, isWholeProperty
+                        entryDate, exitDate, isActive, propertyTypeID, userID, floor, description,2, canCancelWithoutPenalty, isWholeProperty
                     );
 
                     subletApartments.Add(subletApartment);

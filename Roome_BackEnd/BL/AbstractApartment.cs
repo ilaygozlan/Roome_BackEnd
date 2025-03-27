@@ -9,7 +9,7 @@ namespace Roome_BackEnd.BL
       
         
         protected AbstractApartment(int id,int price,int amountOfRooms,string location,bool allowPet,bool allowSmoking,bool gardenBalcony, int parkingSpace,DateTime entryDate, DateTime exitDate,
-        bool isActive,int propertyTypeID,int userID,int floor,string description=""){
+        bool isActive,int propertyTypeID,int userID,int floor,string description, int apartmentType){
              Id = id;
             Price = price;
             AmountOfRooms = amountOfRooms;
@@ -24,7 +24,8 @@ namespace Roome_BackEnd.BL
             PropertyTypeID = propertyTypeID;
             UserID = userID;
             Floor = floor;
-            Description = description;
+            Description = "";
+            ApartmentType = apartmentType;
         }
         
         public int Id { get; set; }
@@ -41,6 +42,7 @@ namespace Roome_BackEnd.BL
         public int PropertyTypeID { get; set; }
         public int UserID { get; set; }
         public int Floor { get; set; }
+        public int ApartmentType { get; set; }
         public string Description { get; set; }
         public abstract int AddApartment();
     }
