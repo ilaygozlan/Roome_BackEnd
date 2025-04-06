@@ -16,10 +16,11 @@ namespace Roome_BackEnd.BL
         bool ownPet;
         bool smoke;
         bool isActive;
+        string jobStatus="";
 
         public User() { }
 
-        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive)
+        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive,string jobStatus)
         {
             ID = id;
             Email = email;
@@ -31,8 +32,9 @@ namespace Roome_BackEnd.BL
             OwnPet = ownPet;
             Smoke = smoke;
             IsActive = isActive;
+            JobStatus=jobStatus;
         }
-
+        public string JobStatus{get=>jobStatus;set=>jobStatus=value;}
         public int ID { get => id; set => id = value; }
         public string Email { get => email; set => email = value; }
         public string FullName { get => fullName; set => fullName = value; }
@@ -44,16 +46,16 @@ namespace Roome_BackEnd.BL
         public bool Smoke { get => smoke; set => smoke = value; }
         public bool IsActive { get => isActive; set => isActive = value; }
 
-        public int AddUser(User NewUser)
+        public static int AddUser(User NewUser)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.AddNewUser(NewUser);
         }
 
-        public User GetUser(string useremail)
+        public static User GetUser(int userId)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
-            return dBserviecesuser.GetUser(useremail);
+            return dBserviecesuser.GetUser(userId);
         }
 
         public static List<User> GetAllUser()

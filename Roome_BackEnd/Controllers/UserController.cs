@@ -17,7 +17,7 @@ namespace Roome_BackEnd.Controllers
         [HttpPost("AddNewUser")]
         public ActionResult<int> PostAddNewUser([FromBody] User newUser)
         {
-            int result = newUser.AddUser(newUser);
+            int result = BL.User.AddUser(newUser);
 
             if (result == 0)
             {
@@ -28,29 +28,17 @@ namespace Roome_BackEnd.Controllers
         }
 
 
-        // GET user by email
-        [HttpGet("GetUserByEmail/{email}")]
-        public ActionResult<User> GETUserByEmail(string email)
+        // GET user by ID
+        [HttpGet("GetUserById/{id}")]
+        public ActionResult<User> GETUserById(int id)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return BadRequest("Email is required.");
-            }
-
-            string decodedEmail = Uri.UnescapeDataString(email.Trim());
-            Console.WriteLine($" Received request for user: '{decodedEmail}'");
-
-            User user = new User().GetUser(decodedEmail);
-
-            if (user == null)
-            {
-                Console.WriteLine(" User not found.");
-                return NotFound("User not found.");
-            }
-
-            Console.WriteLine($"User found: {user.FullName}");
-            return Ok(user);
+            var user = BL.User.GetUser(id);
+            if(id < 0) 
+                return NotFound("No users found.");
+            else 
+                return Ok(user);  
         }
+
 
 
 
