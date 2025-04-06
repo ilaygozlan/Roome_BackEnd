@@ -7,7 +7,7 @@ namespace Roome_BackEnd.BL
         private bool canCancelWithoutPenalty;
         private bool isWholeProperty;
 
-        public SubletApartment() : base(0, 0, 0, "", false, false, false, 0, DateTime.Now, DateTime.Now, true, 0, 0, 0, "")
+        public SubletApartment() : base(0, 0, 0, "", false, false, false, 0, DateTime.Now, DateTime.Now, true, 0, 0, 0, "",2)
         {
             CanCancelWithoutPenalty = false;
             IsWholeProperty = false;
@@ -16,9 +16,9 @@ namespace Roome_BackEnd.BL
         public SubletApartment(
                 int id, int price, int amountOfRooms, string location, bool allowPet, bool allowSmoking,
                 bool gardenBalcony, int parkingSpace, DateTime entryDate, DateTime exitDate, bool isActive,
-                int propertyTypeID, int userID, int floor, string description, bool canCancelWithoutPenalty, bool isWholeProperty)
+                int propertyTypeID, int userID, int floor, string description,int apartmentType, bool canCancelWithoutPenalty, bool isWholeProperty)
                 : base(id, price, amountOfRooms, location, allowPet, allowSmoking, gardenBalcony, parkingSpace,
-                      entryDate, exitDate, isActive, propertyTypeID, userID, floor, description)
+                      entryDate, exitDate, isActive, propertyTypeID, userID, floor, description, apartmentType)
         {
             CanCancelWithoutPenalty = canCancelWithoutPenalty;
             IsWholeProperty = isWholeProperty;

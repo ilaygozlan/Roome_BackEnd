@@ -25,6 +25,10 @@ namespace Roome_BackEnd.BL
             bool success = _dbService.ToggleApartmentActiveStatus(apartmentId);
             return success ? "Apartment status updated successfully." : "Apartment not found or no changes made.";
         }
+public static List<Dictionary<string, object>> GetAllActiveApartments(int userId){
+    DBserviceApartment _dbService=new DBserviceApartment();
+    return _dbService.GetAllActiveApartments(userId);
+}
     public static List<dynamic> GetAllApartments(){
         List<dynamic> allApartments = new List<dynamic>();
          DBserviceApartment _dbService=new DBserviceApartment();
@@ -49,4 +53,5 @@ if(allSublet!= null){
             throw new NotImplementedException();
         }
     }
+
 }
