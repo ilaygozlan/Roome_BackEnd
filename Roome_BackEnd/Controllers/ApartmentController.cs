@@ -17,10 +17,10 @@ namespace Roome_BackEnd.Controllers
             return Ok(ApartmentService.GetAllApartments());
         }
 
-                [HttpGet("GetAllActiveApartments")]
-        public IActionResult GetAllActiveApartments()
+                [HttpGet("GetAllActiveApartments/{userId}")]
+        public IActionResult GetAllActiveApartments(int userId)
         {
-            List<Dictionary<string, object>> apartments = ApartmentService.GetAllActiveApartments();
+            List<Dictionary<string, object>> apartments = ApartmentService.GetAllActiveApartments(userId);
 
             if (apartments == null || apartments.Count == 0)
             {
