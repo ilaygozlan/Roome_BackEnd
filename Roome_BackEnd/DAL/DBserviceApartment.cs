@@ -33,13 +33,14 @@ namespace Roome_BackEnd.DAL
         }
 
 // get all active apartments
-   public List<Dictionary<string, object>> GetAllActiveApartments()
+   public List<Dictionary<string, object>> GetAllActiveApartments(int userId)
         {
             using (SqlConnection con = connect())
             using (SqlCommand cmd = new SqlCommand("sp_GetAllActiveApartments", con))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
-
+                cmd.Parameters.AddWithValue("@UserID", userId);
+                
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     var result = new List<Dictionary<string, object>>();
