@@ -505,6 +505,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 
    public string UserLikeApartment(int userId, int apartmentId)
    {
+    Console.WriteLine($" Trying to like apartment. User: {userId}, Apartment: {apartmentId}");
        using (SqlConnection con = connect())
        using (SqlCommand cmd = CreateCommandWithStoredProcedureUserLikeApartment("sp_UserLikeApartment", con, userId, apartmentId))
        {
@@ -512,11 +513,12 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            {
                con.Open();
                cmd.ExecuteNonQuery();
+               Console.WriteLine(" Insert successful");
                return "Like added successfully";
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"Error: {ex.Message}");
+               Console.WriteLine($"sql Error: {ex.Message}");
                throw new Exception("Failed to like the apartment", ex);
            }
        }
