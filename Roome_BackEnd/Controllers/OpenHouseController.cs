@@ -8,9 +8,38 @@ namespace Roome_BackEnd.Controllers
     public class OpenHouseController : ControllerBase
     {
         //---------------------------------------------------------------------------------
+        // This method returns all open house events for a specific apartment
+        //---------------------------------------------------------------------------------
+        [HttpGet("GetOpenHousesByApartment/{apartmentId}/{userId}")]
+        public ActionResult<List<OpenHouse>> GetOpenHousesByApartment([FromRoute] int apartmentId, int userId)
+        {
+            if (apartmentId <= 0)
+            {
+                return BadRequest("Invalid Apartment ID.");
+            }
+
+            try
+            {
+                List<OpenHouse> openHouses = OpenHouse.GetOpenHousesForApartment(apartmentId, userId);
+
+                if (openHouses == null || openHouses.Count == 0)
+                {
+                    return NotFound("No open house events found for this apartment.");
+                }
+
+                return Ok(openHouses);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving open house events.");
+            }
+        }
+
+        //---------------------------------------------------------------------------------
         // This method creates a new open house event
         //---------------------------------------------------------------------------------
-      [HttpPost("CreateNewOpenHouse/{userId}")]
+        [HttpPost("CreateNewOpenHouse/{userId}")]
         public ActionResult<string> CreateNewOpenHouse([FromBody] OpenHouse openHouse, [FromRoute] int userId)
         {
             if (userId <= 0)
@@ -50,7 +79,7 @@ namespace Roome_BackEnd.Controllers
             return Ok("User registered successfully for the open house.");
         }
 
-        
+
         //---------------------------------------------------------------------------------
         // This method Toggle Attendance for open house
         //---------------------------------------------------------------------------------
@@ -71,7 +100,7 @@ namespace Roome_BackEnd.Controllers
 
             return Ok("Attendance status updated successfully.");
         }
-        
+
         // DELETE: Delete open house
         [HttpDelete("DeleteOpenHouse/{openHouseId}/{userId}")]
         public ActionResult<string> DeleteOpenHouse([FromRoute] int openHouseId, [FromRoute] int userId)

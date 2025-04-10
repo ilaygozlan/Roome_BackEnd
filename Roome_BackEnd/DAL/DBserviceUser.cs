@@ -787,6 +787,47 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
             return cmd;
         }
 
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to get user info
+        //---------------------------------------------------------------------------------
+
+public User GetUserById(int userId)
+{
+    string query = "GetUserInfo";
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand(query, con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.AddWithValue("@UserId", userId);
+
+        try
+        {
+            con.Open();
+            SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return new User
+                {
+                    ID = Convert.ToInt32(reader["ID"]),
+                    Email = reader["Email"].ToString(),
+                    FullName = reader["FullName"].ToString(),
+                    PhoneNumber = reader["PhoneNumber"].ToString(),
+                    Gender = Convert.ToChar(reader["Sex"]),
+                    BirthDate = Convert.ToDateTime(reader["BirthDate"]),
+                    ProfilePicture = reader["ProfilePicture"].ToString(),
+                    OwnPet = Convert.ToBoolean(reader["OwnPath"]),
+                    Smoke = Convert.ToBoolean(reader["Smoke"]),
+                    IsActive = Convert.ToBoolean(reader["IsActive"])
+                };
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error fetching user info by ID", ex);
+        }
+    }
+}
 
     }
 }

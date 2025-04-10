@@ -124,7 +124,11 @@ namespace Roome_BackEnd.BL
             return dbService.GetUserOwnedApartments(userId);
         }
 
-
+        public static User GetUserById(int userId){
+            DBserviceUser db = new DBserviceUser();
+            User user = db.GetUserById(userId);
+            return user;
+        }
     }
     
 }
