@@ -10,13 +10,22 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-
+// GET user by ID
+        [HttpGet("GetUserById/{id}")]
+        public ActionResult<User> GETUserById(int id)
+        {
+            var user = BL.User.GetUser(id);
+            if(id < 0) 
+                return NotFound("No users found.");
+            else 
+                return Ok(user);  
+        }
 
         // POST add new user to DB
 [HttpPost("AddNewUser")]
 public ActionResult<object> PostAddNewUser([FromBody] User newUser)
 {
-    var (userId, isNew) = newUser.AddUser(newUser);
+    var (userId, isNew) = BL.User.AddUser(newUser);
 
     var resJson = new
     {
@@ -48,6 +57,7 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
             return StatusCode(500, "Server error: " + ex.Message);
         }
     }
+
 
         // GET all users
         [HttpGet("GetAllUsers")]
@@ -89,26 +99,26 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
 
 
 
-        //Update User Details 
         [HttpPut("UpdateUserDetails")]
-        public ActionResult<int> PUTUserDetails([FromBody] User user)
-        {
-            if (string.IsNullOrWhiteSpace(user.Email))
+            public ActionResult<int> PUTUserDetails([FromBody] User user)
             {
-                return BadRequest("Email is required.");
+                if (user.ID <= 0)
+                {
+                    return BadRequest("User ID is required.");
+                }
+
+                int result = user.UpdateUserDetailsById(user);
+
+                if (result == 0)
+                {
+                    Console.WriteLine("No changes made or user not found.");
+                    return NotFound("No changes made or user not found.");
+                }
+
+                Console.WriteLine($"User details updated successfully. Rows affected: {result}");
+                return Ok(result);
             }
 
-            int result = user.UpdateUserDetailsByEmail(user);
-
-            if (result == 0)
-            {
-                Console.WriteLine(" No changes made or user not found.");
-                return NotFound("No changes made or user not found.");
-            }
-
-            Console.WriteLine($"User details updated successfully. Rows affected: {result}");
-            return Ok(result);
-        }
 
         //Add friend
         [HttpPost("AddFriend")]
