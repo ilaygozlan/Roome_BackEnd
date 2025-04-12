@@ -82,26 +82,26 @@ namespace Roome_BackEnd.Controllers
 
 
 
-        //Update User Details 
         [HttpPut("UpdateUserDetails")]
-        public ActionResult<int> PUTUserDetails([FromBody] User user)
-        {
-            if (string.IsNullOrWhiteSpace(user.Email))
+            public ActionResult<int> PUTUserDetails([FromBody] User user)
             {
-                return BadRequest("Email is required.");
+                if (user.ID <= 0)
+                {
+                    return BadRequest("User ID is required.");
+                }
+
+                int result = user.UpdateUserDetailsById(user);
+
+                if (result == 0)
+                {
+                    Console.WriteLine("No changes made or user not found.");
+                    return NotFound("No changes made or user not found.");
+                }
+
+                Console.WriteLine($"User details updated successfully. Rows affected: {result}");
+                return Ok(result);
             }
 
-            int result = user.UpdateUserDetailsByEmail(user);
-
-            if (result == 0)
-            {
-                Console.WriteLine(" No changes made or user not found.");
-                return NotFound("No changes made or user not found.");
-            }
-
-            Console.WriteLine($"User details updated successfully. Rows affected: {result}");
-            return Ok(result);
-        }
 
         //Add friend
         [HttpPost("AddFriend")]

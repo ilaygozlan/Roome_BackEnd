@@ -289,14 +289,14 @@ public int DeactivateUser(string userEmail)
     }
    
 
-   //--------------------------------------------------------------------------------------------------
-    // This method Update User Details By Email
-    //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// This method Update User Details By ID
+//--------------------------------------------------------------------------------------------------
 
-    public int UpdateUserDetailsByEmail(User user)
+public int UpdateUserDetailsById(User user)
 {
     using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsByEmail("UpdateUserDetailsByEmail", con, user))
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsById("UpdateUserDetails", con, user))
     {
         try
         {
@@ -309,7 +309,7 @@ public int DeactivateUser(string userEmail)
 
             cmd.ExecuteNonQuery();
             int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
-            
+
             Console.WriteLine($"🔄 Rows affected: {numEffected}");
             return numEffected;
         }
@@ -321,11 +321,11 @@ public int DeactivateUser(string userEmail)
     }
 }
 
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to Update User Details
-    //---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to Update User Details
+//---------------------------------------------------------------------------------
 
-    private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsByEmail(string spName, SqlConnection con, User user)
+private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsById(string spName, SqlConnection con, User user)
 {
     SqlCommand cmd = new SqlCommand
     {
@@ -335,7 +335,7 @@ public int DeactivateUser(string userEmail)
         CommandType = CommandType.StoredProcedure
     };
 
-    cmd.Parameters.AddWithValue("@Email", user.Email.Trim());
+    cmd.Parameters.AddWithValue("@UserID", user.ID);
     cmd.Parameters.AddWithValue("@FullName", (object?)user.FullName ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@PhoneNumber", (object?)user.PhoneNumber ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Sex", (object?)user.Gender ?? DBNull.Value);
@@ -344,9 +344,11 @@ public int DeactivateUser(string userEmail)
     cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@JobStatus", (object?)user.JobStatus ?? DBNull.Value);
 
     return cmd;
 }
+
 
 
    //--------------------------------------------------------------------------------------------------
@@ -459,7 +461,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 }
 
    //--------------------------------------------------------------------------------------------------
-    // This method Get Remove Friends
+    // This method Remove Friends
     //--------------------------------------------------------------------------------------------------
 
     public string RemoveFriend(int userId1, int userId2)

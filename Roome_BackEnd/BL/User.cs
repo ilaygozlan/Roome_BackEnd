@@ -70,10 +70,10 @@ namespace Roome_BackEnd.BL
             return dBserviecesuser.DeactivateUser(userEmail);
         }
 
-        public int UpdateUserDetailsByEmail(User user)
+        public int UpdateUserDetailsById(User user)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
-            return dBserviecesuser.UpdateUserDetailsByEmail(user);
+            return dBserviecesuser.UpdateUserDetailsById(user);
         }
         public static string AddFriend(int userId1, int userId2)
         {
