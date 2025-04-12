@@ -11,24 +11,6 @@ namespace Roome_BackEnd.Controllers
     public class UserController : ControllerBase
     {
 
-[HttpGet("GetUserById/{id}")]
-public IActionResult GetUserById(int id)
-{
-    try
-    {
-        User user = Roome_BackEnd.BL.User.GetUserById(id);
-
-        if (user == null)
-            return NotFound("User not found");
-
-        return Ok(user);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"Internal server error: {ex.Message}");
-    }
-}
-
 
         // POST add new user to DB
 [HttpPost("AddNewUser")]
