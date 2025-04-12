@@ -44,7 +44,7 @@ namespace Roome_BackEnd.BL
         public bool Smoke { get => smoke; set => smoke = value; }
         public bool IsActive { get => isActive; set => isActive = value; }
 
-        public int AddUser(User NewUser)
+        public (int userId, bool isNew) AddUser(User NewUser)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.AddNewUser(NewUser);
@@ -129,6 +129,10 @@ namespace Roome_BackEnd.BL
             User user = db.GetUserById(userId);
             return user;
         }
+        public static int CheckIfUserExists(string email){
+          DBserviceUser db = new DBserviceUser();
+            return db.CheckIfUserExists(email);
+        }
     }
-    
+
 }

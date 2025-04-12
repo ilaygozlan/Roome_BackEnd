@@ -31,45 +31,41 @@ public IActionResult GetUserById(int id)
 
 
         // POST add new user to DB
-        [HttpPost("AddNewUser")]
-        public ActionResult<int> PostAddNewUser([FromBody] User newUser)
+[HttpPost("AddNewUser")]
+public ActionResult<object> PostAddNewUser([FromBody] User newUser)
+{
+    var (userId, isNew) = newUser.AddUser(newUser);
+
+    var resJson = new
+    {
+        userId = userId,
+        isNewUser = isNew
+    };
+
+    return Ok(resJson);
+}
+
+
+       
+    // GET: api/User/CheckIfExists?email=example@email.com
+    [HttpGet("CheckIfExists")]
+    public ActionResult<object> CheckIfUserExists([FromQuery] string email)
+    {
+        try
         {
-            int result = newUser.AddUser(newUser);
+            int userId = BL.User.CheckIfUserExists(email);
 
-            if (result == 0)
+            return Ok(new
             {
-                return Conflict("Email already exists or user could not be added.");
-            }
-
-            return Ok(result);
+                userId = userId,
+                exists = userId != -1
+            });
         }
-
-
-        // GET user by email
-        [HttpGet("GetUserByEmail/{email}")]
-        public ActionResult<User> GETUserByEmail(string email)
+        catch (Exception ex)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return BadRequest("Email is required.");
-            }
-
-            string decodedEmail = Uri.UnescapeDataString(email.Trim());
-            Console.WriteLine($" Received request for user: '{decodedEmail}'");
-
-            User user = new User().GetUser(decodedEmail);
-
-            if (user == null)
-            {
-                Console.WriteLine(" User not found.");
-                return NotFound("User not found.");
-            }
-
-            Console.WriteLine($"User found: {user.FullName}");
-            return Ok(user);
+            return StatusCode(500, "Server error: " + ex.Message);
         }
-
-
+    }
 
         // GET all users
         [HttpGet("GetAllUsers")]

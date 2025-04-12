@@ -33,39 +33,37 @@ public SqlConnection connect()
     // This method add new user
     //--------------------------------------------------------------------------------------------------
 
-   public int AddNewUser(User user)
+public (int userId, bool isNew) AddNewUser(User user)
 {
     using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber, 
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber,
         user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke))
     {
         try
         {
-            con.Open();
-            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+           
+            SqlParameter userIdParam = new SqlParameter("@UserId", SqlDbType.Int)
             {
                 Direction = ParameterDirection.Output
             };
-            cmd.Parameters.Add(outputParam);
+            cmd.Parameters.Add(userIdParam);
 
+            SqlParameter isNewParam = new SqlParameter("@IsNew", SqlDbType.Bit)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(isNewParam);
+
+            con.Open();
             cmd.ExecuteNonQuery();
 
-            int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
+            int userId = (userIdParam.Value != DBNull.Value) ? (int)userIdParam.Value : -1;
+            bool isNew = (isNewParam.Value != DBNull.Value) && (bool)isNewParam.Value;
 
-            if (numEffected == 0)
-            {
-                Console.WriteLine("Failed to add user. Email might already exist.");
-            }
-            else
-            {
-                Console.WriteLine($"User added successfully. Rows affected: {numEffected}");
-            }
-
-            return numEffected;
+            return (userId, isNew);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
             throw new Exception("Failed to execute stored procedure", ex);
         }
     }
@@ -825,6 +823,43 @@ public User GetUserById(int userId)
         catch (Exception ex)
         {
             throw new Exception("Error fetching user info by ID", ex);
+        }
+    }
+}
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to check if user exists
+        //---------------------------------------------------------------------------------
+
+public int CheckIfUserExists(string email)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand("checkIfUserExist", con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+
+        // קלט: האימייל של המשתמש
+        cmd.Parameters.AddWithValue("@Email", email);
+
+        // פלט: userId או -1
+        SqlParameter userIdParam = new SqlParameter("@UserId", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output
+        };
+        cmd.Parameters.Add(userIdParam);
+
+        try
+        {
+            con.Open();
+            cmd.ExecuteNonQuery();
+
+            int userId = (userIdParam.Value != DBNull.Value) ? (int)userIdParam.Value : -1;
+            return userId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error checking if user exists: " + ex.Message);
+            throw;
         }
     }
 }
