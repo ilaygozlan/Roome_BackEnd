@@ -129,4 +129,5 @@ public IActionResult GetApartmentById (int apartmentId)
         }
 
     }
+    
 }
