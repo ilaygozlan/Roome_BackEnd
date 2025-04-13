@@ -16,11 +16,12 @@ namespace Roome_BackEnd.BL
         bool ownPet;
         bool smoke;
         bool isActive;
+        string token;
         string jobStatus="";
 
         public User() { }
 
-        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive,string jobStatus)
+        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive,string jobStatus,  string token)
         {
             ID = id;
             Email = email;
@@ -33,6 +34,7 @@ namespace Roome_BackEnd.BL
             Smoke = smoke;
             IsActive = isActive;
             JobStatus=jobStatus;
+            Token= token;
         }
         public string JobStatus{get=>jobStatus;set=>jobStatus=value;}
         public int ID { get => id; set => id = value; }
@@ -45,6 +47,7 @@ namespace Roome_BackEnd.BL
         public bool OwnPet { get => ownPet; set => ownPet = value; }
         public bool Smoke { get => smoke; set => smoke = value; }
         public bool IsActive { get => isActive; set => isActive = value; }
+        public string Token { get => token; set => token = value; }
 
         public static (int userId, bool isNew) AddUser(User NewUser)
         {

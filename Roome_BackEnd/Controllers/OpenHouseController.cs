@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Roome_BackEnd.BL;
+using Roome_BackEnd.DAL;
 
 namespace Roome_BackEnd.Controllers
 {
@@ -35,6 +36,27 @@ namespace Roome_BackEnd.Controllers
                 return StatusCode(500, "An error occurred while retrieving open house events.");
             }
         }
+        //---------------------------------------------------------------------------------
+        // This method Get Owner Id
+        //---------------------------------------------------------------------------------
+[HttpGet("GetOwnerId/{openHouseId}")]
+public IActionResult GetOwnerId(int openHouseId)
+{
+    try
+    {
+        int ownerId = OpenHouse.GetOwnerId(openHouseId);
+        
+        if(ownerId <= 0)
+            return NotFound("Owner not found for this open house event.");
+
+        return Ok(ownerId);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
+}
+
 
         //---------------------------------------------------------------------------------
         // This method creates a new open house event
