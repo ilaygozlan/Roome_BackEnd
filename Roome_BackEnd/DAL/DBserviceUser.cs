@@ -29,9 +29,128 @@ public SqlConnection connect()
 
     return new SqlConnection(cStr);
 }
+      //--------------------------------------------------------------------------------------------------
+    //update token
     //--------------------------------------------------------------------------------------------------
-    // This method add new user
+
+ private SqlCommand CreateCommandWithStoredProcedureUpdateToken(string spName, SqlConnection con, int userId, string expoPushToken)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
+        return cmd;
+    }
+
+    public int UpdateToken(int userId, string expoPushToken)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateToken("UPDATETOKEN", con, userId, expoPushToken))
+        {
+            try
+            {
+                con.Open();
+                return cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating token", ex);
+            }
+        }
+    }
+      //--------------------------------------------------------------------------------------------------
+    //Post token
     //--------------------------------------------------------------------------------------------------
+
+private SqlCommand CreateCommandWithStoredProcedurePostToken(string spName, SqlConnection con, int userId, string expoPushToken)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
+        return cmd;
+    }
+
+    public int PostToken(int userId, string expoPushToken)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedurePostToken("POSTTOKEN", con, userId, expoPushToken))
+        {
+            try
+            {
+                con.Open();
+                return cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error posting token", ex);
+            }
+        }
+    }
+    //--------------------------------------------------------------------------------------------------
+    // GetTokenByUserId
+    //--------------------------------------------------------------------------------------------------
+
+  private SqlCommand CreateCommandWithStoredProcedureGetToken(string spName, SqlConnection con, int userId)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        return cmd;
+    }
+
+    public string GetToken(int userId)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetToken("GETTOKEN", con, userId))
+        {
+            try
+            {
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                    return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving token", ex);
+            }
+        }
+        return null;
+    }
+
+ private SqlConnection Connect()
+{
+    string? cStr = configuration.GetConnectionString("myProjDB");
+    if (string.IsNullOrEmpty(cStr))
+    {
+        throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
+    }
+    return new SqlConnection(cStr);
+}
+
+
+        //--------------------------------------------------------------------------------------------------
+        // This method add new user
+        //--------------------------------------------------------------------------------------------------
 
 public (int userId, bool isNew) AddNewUser(User user)
 {
@@ -188,7 +307,9 @@ private SqlCommand CreateCommandWithStoredProcedureGetUser(string spName, SqlCon
                             BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
                             Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
                             OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
-                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                            Token = dataReader["Token"]?.ToString() ?? "",
+
                         };
 
                         allUsers.Add(user);
@@ -503,6 +624,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 
    public string UserLikeApartment(int userId, int apartmentId)
    {
+    Console.WriteLine($" Trying to like apartment. User: {userId}, Apartment: {apartmentId}");
        using (SqlConnection con = connect())
        using (SqlCommand cmd = CreateCommandWithStoredProcedureUserLikeApartment("sp_UserLikeApartment", con, userId, apartmentId))
        {
@@ -510,11 +632,12 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            {
                con.Open();
                cmd.ExecuteNonQuery();
+               Console.WriteLine(" Insert successful");
                return "Like added successfully";
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"Error: {ex.Message}");
+               Console.WriteLine($"sql Error: {ex.Message}");
                throw new Exception("Failed to like the apartment", ex);
            }
        }
@@ -700,7 +823,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
             {
                 try
                 {
-                    con.Open(); // ✅ Ensure connection is open before reading data
+                    con.Open();
 
                     Console.WriteLine($"Fetching owned apartments for User ID={userId}");
 
