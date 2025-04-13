@@ -40,11 +40,8 @@ namespace Roome_BackEnd.BL
             OwnPet = ownPet;
             Smoke = smoke;
             IsActive = isActive;
-<<<<<<< HEAD
             Token= token;
-=======
             JobStatus=jobStatus;
->>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
         }
         public string JobStatus{get=>jobStatus;set=>jobStatus=value;}
         public int ID { get => id; set => id = value; }

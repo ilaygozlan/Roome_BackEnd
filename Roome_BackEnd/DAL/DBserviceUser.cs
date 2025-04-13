@@ -69,7 +69,6 @@ public (int userId, bool isNew) AddNewUser(User user)
     }
 }
 
-<<<<<<< HEAD
       //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to add new user
     //---------------------------------------------------------------------------------
@@ -77,16 +76,6 @@ public (int userId, bool isNew) AddNewUser(User user)
     private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
         string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
         char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string Token)
-=======
-//---------------------------------------------------------------------------------
-// Create the SqlCommand using a stored procedure to add new user
-//---------------------------------------------------------------------------------
-private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
-    string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-    char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string JobStatus)
-{
-    SqlCommand cmd = new SqlCommand
->>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
     {
         Connection = con,
         CommandText = spName,
@@ -117,7 +106,6 @@ public User GetUser(int userId)
     {
         try
         {
-<<<<<<< HEAD
             Connection = con,
             CommandText = spName,
             CommandTimeout = 10,
@@ -148,10 +136,6 @@ public User GetUser(int userId)
         {
             using (SqlConnection con = connect())
             using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con, useremail))
-=======
-            con.Open();
-            using (SqlDataReader dataReader = cmd.ExecuteReader())
->>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
             {
                 if (dataReader.Read())
                 {
