@@ -37,7 +37,7 @@ public (int userId, bool isNew) AddNewUser(User user)
 {
     using (SqlConnection con = connect())
     using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber,
-        user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke))
+        user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke, user.JobStatus))
     {
         try
         {
@@ -69,6 +69,7 @@ public (int userId, bool isNew) AddNewUser(User user)
     }
 }
 
+<<<<<<< HEAD
       //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to add new user
     //---------------------------------------------------------------------------------
@@ -76,9 +77,47 @@ public (int userId, bool isNew) AddNewUser(User user)
     private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
         string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
         char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string Token)
+=======
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to add new user
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
+    string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
+    char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string JobStatus)
+{
+    SqlCommand cmd = new SqlCommand
+>>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
     {
-        SqlCommand cmd = new SqlCommand
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@Email", Email);
+    cmd.Parameters.AddWithValue("@FullName", FullName);
+    cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
+    cmd.Parameters.AddWithValue("@Gender", Gender);
+    cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
+    cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
+    cmd.Parameters.AddWithValue("@Smoke", Smoke);
+    cmd.Parameters.AddWithValue("@JobStatus", JobStatus ?? (object)DBNull.Value);
+
+    return cmd;
+}
+
+//--------------------------------------------------------------------------------------------------
+// This method gets user details by ID
+//--------------------------------------------------------------------------------------------------
+public User GetUser(int userId)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserById", con, userId))
+    {
+        try
         {
+<<<<<<< HEAD
             Connection = con,
             CommandText = spName,
             CommandTimeout = 10,
@@ -109,60 +148,58 @@ public (int userId, bool isNew) AddNewUser(User user)
         {
             using (SqlConnection con = connect())
             using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con, useremail))
+=======
+            con.Open();
+            using (SqlDataReader dataReader = cmd.ExecuteReader())
+>>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
             {
-                try
+                if (dataReader.Read())
                 {
-                    con.Open();
-                    using (SqlDataReader dataReader = cmd.ExecuteReader())
+                    return new User
                     {
-                        if (dataReader.Read())
-                        {
-                            return new User
-                            {
-                                ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
-                                Email = dataReader["Email"]?.ToString() ?? "",
-                                FullName = dataReader["FullName"]?.ToString() ?? "",
-                                PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
-                                Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
-                                ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
-                                BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
-                                Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
-                                OwnPet = dataReader["OwnPet"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPet"]) : false,
-                                IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
-                            };
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                    throw new Exception("Failed to retrieve user", ex);
+                        ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
+                        Email = dataReader["Email"]?.ToString() ?? "",
+                        FullName = dataReader["FullName"]?.ToString() ?? "",
+                        PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
+                        Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
+                        ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
+                        BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
+                        Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
+                        OwnPet = dataReader["OwnPet"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPet"]) : false,
+                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                        JobStatus=dataReader["JobStatus"]?.ToString() ?? ""
+                    };
                 }
             }
-
-            return null; 
         }
-
-
-
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to get user by email 
-    //---------------------------------------------------------------------------------
-
-     private SqlCommand CreateCommandWithStoredProcedureGetUser(String spName, SqlConnection con, string useremail)
+        catch (Exception ex)
         {
-            SqlCommand cmd = new SqlCommand
-            {
-                Connection = con,
-                CommandText = spName,
-                CommandTimeout = 10,
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.AddWithValue("@Email", useremail.Trim());
-
-            return cmd;
+            Console.WriteLine($"Error: {ex.Message}");
+            throw new Exception("Failed to retrieve user", ex);
         }
+    }
+
+    return null; 
+}
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to get user by ID 
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureGetUser(string spName, SqlConnection con, int userId)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@ID", userId);
+
+    return cmd;
+}
+
 
      //--------------------------------------------------------------------------------------------------
     // This method get all users
@@ -292,14 +329,14 @@ public int DeactivateUser(string userEmail)
     }
    
 
-   //--------------------------------------------------------------------------------------------------
-    // This method Update User Details By Email
-    //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// This method Update User Details By ID
+//--------------------------------------------------------------------------------------------------
 
-    public int UpdateUserDetailsByEmail(User user)
+public int UpdateUserDetailsById(User user)
 {
     using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsByEmail("UpdateUserDetailsByEmail", con, user))
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsById("UpdateUserDetails", con, user))
     {
         try
         {
@@ -312,7 +349,7 @@ public int DeactivateUser(string userEmail)
 
             cmd.ExecuteNonQuery();
             int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
-            
+
             Console.WriteLine($"🔄 Rows affected: {numEffected}");
             return numEffected;
         }
@@ -324,11 +361,11 @@ public int DeactivateUser(string userEmail)
     }
 }
 
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to Update User Details
-    //---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to Update User Details
+//---------------------------------------------------------------------------------
 
-    private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsByEmail(string spName, SqlConnection con, User user)
+private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsById(string spName, SqlConnection con, User user)
 {
     SqlCommand cmd = new SqlCommand
     {
@@ -338,7 +375,7 @@ public int DeactivateUser(string userEmail)
         CommandType = CommandType.StoredProcedure
     };
 
-    cmd.Parameters.AddWithValue("@Email", user.Email.Trim());
+    cmd.Parameters.AddWithValue("@UserID", user.ID);
     cmd.Parameters.AddWithValue("@FullName", (object?)user.FullName ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@PhoneNumber", (object?)user.PhoneNumber ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Sex", (object?)user.Gender ?? DBNull.Value);
@@ -347,10 +384,15 @@ public int DeactivateUser(string userEmail)
     cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
+<<<<<<< HEAD
     cmd.Parameters.AddWithValue("@Token", (object?)user.Token ?? DBNull.Value);
+=======
+    cmd.Parameters.AddWithValue("@JobStatus", (object?)user.JobStatus ?? DBNull.Value);
+>>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
 
     return cmd;
 }
+
 
 
    //--------------------------------------------------------------------------------------------------
@@ -425,7 +467,9 @@ public List<User> GetUserFriends(int userId)
                         BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
                         Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
                         OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
-                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                          JobStatus = dataReader["JobStatus"]?.ToString() ?? ""
+
                     };
 
                     friends.Add(friend);
@@ -461,7 +505,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 }
 
    //--------------------------------------------------------------------------------------------------
-    // This method Get Remove Friends
+    // This method Remove Friends
     //--------------------------------------------------------------------------------------------------
 
     public string RemoveFriend(int userId1, int userId2)
