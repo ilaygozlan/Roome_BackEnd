@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Dynamic;
 using Roome_BackEnd.BL;
+using Roome_BackEnd.DAL;
 
 
 namespace Roome_BackEnd.Controllers
@@ -281,7 +282,69 @@ public IActionResult GetUserById(int id)
             }
         }
 
+        // GET: api/User/GetPushToken/5
+        [HttpGet("GetPushToken/{userId}")]
+        public IActionResult GetPushToken(int userId)
+        {
+            try
+            {
+                DBserviceUser db = new DBserviceUser();
+                string token = db.GetToken(userId);
+                if (string.IsNullOrEmpty(token))
+                    return NotFound("Push token not found for this user.");
+
+                return Ok(new { pushToken = token });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        // POST: api/User/PostPushToken/5
+[HttpPost("PostPushToken")]
+public IActionResult PostPushToken([FromBody] User user)
+{
+    try
+    {
+        DBserviceUser db = new DBserviceUser();
+        int rowsAffected = db.PostToken(user.ID, user.Token);
+        if (rowsAffected > 0)
+            return Ok("Push token inserted successfully.");
+        else
+            return BadRequest("Failed to insert push token.");
     }
-
-
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
 }
+
+
+
+        // PUT: api/User/UpdatePushToken/5
+ [HttpPut("UpdatePushToken/{userId}")]
+public IActionResult UpdatePushToken(int userId, [FromBody] User user)
+{
+    try
+    {
+        if (string.IsNullOrWhiteSpace(user.Token))
+            return BadRequest("Token is required.");
+
+        DBserviceUser db = new DBserviceUser();
+        string currentToken = db.GetToken(userId);
+
+        int rowsAffected = string.IsNullOrEmpty(currentToken)
+            ? db.PostToken(userId, user.Token)
+            : db.UpdateToken(userId, user.Token);
+
+        return rowsAffected > 0 ? Ok("Push token updated successfully.")
+                                : BadRequest("Failed to update push token.");
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
+}
+
+}}
