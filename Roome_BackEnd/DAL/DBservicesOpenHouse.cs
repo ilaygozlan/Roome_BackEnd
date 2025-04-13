@@ -29,7 +29,40 @@ namespace Roome_BackEnd.DAL
 
             return new SqlConnection(cStr);
         }
+                //--------------------------------------------------------------------------------------------------
+        // This method Get Owner Id
+        //--------------------------------------------------------------------------------------------------
 
+public int GetOwnerId(int openHouseId){
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetOwnerId("sp_GetOwnerId", con, openHouseId))
+    {
+        try
+        {
+            con.Open();
+            object result = cmd.ExecuteScalar();
+            return Convert.ToInt32(result);
+            
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error retrieving owner ID", ex);
+        }
+    }
+}
+
+private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, SqlConnection con, int openHouseId)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+    cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
+    return cmd;
+}
         //--------------------------------------------------------------------------------------------------
         // This method creates a new open house
         //--------------------------------------------------------------------------------------------------

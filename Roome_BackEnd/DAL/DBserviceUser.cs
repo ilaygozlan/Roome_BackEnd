@@ -29,8 +29,8 @@ public SqlConnection connect()
 
     return new SqlConnection(cStr);
 }
-    //--------------------------------------------------------------------------------------------------
-    // This method add new user
+      //--------------------------------------------------------------------------------------------------
+    //update token
     //--------------------------------------------------------------------------------------------------
 
 public (int userId, bool isNew) AddNewUser(User user)
@@ -75,7 +75,7 @@ public (int userId, bool isNew) AddNewUser(User user)
 
     private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
         string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-        char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke)
+        char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string Token)
     {
         SqlCommand cmd = new SqlCommand
         {
@@ -93,6 +93,8 @@ public (int userId, bool isNew) AddNewUser(User user)
         cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
         cmd.Parameters.AddWithValue("@Smoke", Smoke);
+        cmd.Parameters.AddWithValue("@Token", Token);
+
 
         return cmd;
     }
@@ -192,7 +194,9 @@ public (int userId, bool isNew) AddNewUser(User user)
                             BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
                             Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
                             OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
-                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                            Token = dataReader["Token"]?.ToString() ?? "",
+
                         };
 
                         allUsers.Add(user);
@@ -343,6 +347,7 @@ public int DeactivateUser(string userEmail)
     cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@Token", (object?)user.Token ?? DBNull.Value);
 
     return cmd;
 }
@@ -503,6 +508,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 
    public string UserLikeApartment(int userId, int apartmentId)
    {
+    Console.WriteLine($" Trying to like apartment. User: {userId}, Apartment: {apartmentId}");
        using (SqlConnection con = connect())
        using (SqlCommand cmd = CreateCommandWithStoredProcedureUserLikeApartment("sp_UserLikeApartment", con, userId, apartmentId))
        {
@@ -510,11 +516,12 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            {
                con.Open();
                cmd.ExecuteNonQuery();
+               Console.WriteLine(" Insert successful");
                return "Like added successfully";
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"Error: {ex.Message}");
+               Console.WriteLine($"sql Error: {ex.Message}");
                throw new Exception("Failed to like the apartment", ex);
            }
        }
@@ -700,7 +707,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
             {
                 try
                 {
-                    con.Open(); // ✅ Ensure connection is open before reading data
+                    con.Open();
 
                     Console.WriteLine($"Fetching owned apartments for User ID={userId}");
 
