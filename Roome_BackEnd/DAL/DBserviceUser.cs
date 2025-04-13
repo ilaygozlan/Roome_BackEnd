@@ -33,6 +33,125 @@ public SqlConnection connect()
     //update token
     //--------------------------------------------------------------------------------------------------
 
+ private SqlCommand CreateCommandWithStoredProcedureUpdateToken(string spName, SqlConnection con, int userId, string expoPushToken)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
+        return cmd;
+    }
+
+    public int UpdateToken(int userId, string expoPushToken)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateToken("UPDATETOKEN", con, userId, expoPushToken))
+        {
+            try
+            {
+                con.Open();
+                return cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error updating token", ex);
+            }
+        }
+    }
+      //--------------------------------------------------------------------------------------------------
+    //Post token
+    //--------------------------------------------------------------------------------------------------
+
+private SqlCommand CreateCommandWithStoredProcedurePostToken(string spName, SqlConnection con, int userId, string expoPushToken)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
+        return cmd;
+    }
+
+    public int PostToken(int userId, string expoPushToken)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedurePostToken("POSTTOKEN", con, userId, expoPushToken))
+        {
+            try
+            {
+                con.Open();
+                return cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error posting token", ex);
+            }
+        }
+    }
+    //--------------------------------------------------------------------------------------------------
+    // GetTokenByUserId
+    //--------------------------------------------------------------------------------------------------
+
+  private SqlCommand CreateCommandWithStoredProcedureGetToken(string spName, SqlConnection con, int userId)
+    {
+        SqlCommand cmd = new SqlCommand
+        {
+            Connection = con,
+            CommandText = spName,
+            CommandTimeout = 10,
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        return cmd;
+    }
+
+    public string GetToken(int userId)
+    {
+        using (SqlConnection con = Connect())
+        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetToken("GETTOKEN", con, userId))
+        {
+            try
+            {
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                    return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error retrieving token", ex);
+            }
+        }
+        return null;
+    }
+
+ private SqlConnection Connect()
+{
+    string? cStr = configuration.GetConnectionString("myProjDB");
+    if (string.IsNullOrEmpty(cStr))
+    {
+        throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
+    }
+    return new SqlConnection(cStr);
+}
+
+
+        //--------------------------------------------------------------------------------------------------
+        // This method add new user
+        //--------------------------------------------------------------------------------------------------
+
 public (int userId, bool isNew) AddNewUser(User user)
 {
     using (SqlConnection con = connect())
@@ -69,13 +188,14 @@ public (int userId, bool isNew) AddNewUser(User user)
     }
 }
 
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to add new user
-    //---------------------------------------------------------------------------------
-
-    private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
-        string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-        char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string Token)
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to add new user
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
+    string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
+    char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string JobStatus)
+{
+    SqlCommand cmd = new SqlCommand
     {
         Connection = con,
         CommandText = spName,
@@ -106,36 +226,8 @@ public User GetUser(int userId)
     {
         try
         {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
-        cmd.Parameters.AddWithValue("@Email", Email);
-        cmd.Parameters.AddWithValue("@FullName", FullName);
-        cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
-        cmd.Parameters.AddWithValue("@Gender", Gender);
-        cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
-        cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
-        cmd.Parameters.AddWithValue("@Smoke", Smoke);
-        cmd.Parameters.AddWithValue("@Token", Token);
-
-
-        return cmd;
-    }
-
-
-
-    //--------------------------------------------------------------------------------------------------
-    // This method get user deatils by email
-    //--------------------------------------------------------------------------------------------------
-
-        public User GetUser(string useremail)
-        {
-            using (SqlConnection con = connect())
-            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con, useremail))
+            con.Open();
+            using (SqlDataReader dataReader = cmd.ExecuteReader())
             {
                 if (dataReader.Read())
                 {
@@ -368,11 +460,7 @@ private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsById(string 
     cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
-<<<<<<< HEAD
-    cmd.Parameters.AddWithValue("@Token", (object?)user.Token ?? DBNull.Value);
-=======
     cmd.Parameters.AddWithValue("@JobStatus", (object?)user.JobStatus ?? DBNull.Value);
->>>>>>> 0a631316217fb165e3400f1fe55a2545f1967602
 
     return cmd;
 }
