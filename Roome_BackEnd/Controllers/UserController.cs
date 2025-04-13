@@ -11,65 +11,53 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+// GET user by ID
+        [HttpGet("GetUserById/{id}")]
+        public ActionResult<User> GETUserById(int id)
+        {
+            var user = BL.User.GetUser(id);
+            if(id < 0) 
+                return NotFound("No users found.");
+            else 
+                return Ok(user);  
+        }
 
-[HttpGet("GetUserById/{id}")]
-public IActionResult GetUserById(int id)
+        // POST add new user to DB
+[HttpPost("AddNewUser")]
+public ActionResult<object> PostAddNewUser([FromBody] User newUser)
 {
-    try
-    {
-        User user = Roome_BackEnd.BL.User.GetUserById(id);
+    var (userId, isNew) = BL.User.AddUser(newUser);
 
-        if (user == null)
-            return NotFound("User not found");
-
-        return Ok(user);
-    }
-    catch (Exception ex)
+    var resJson = new
     {
-        return StatusCode(500, $"Internal server error: {ex.Message}");
-    }
+        userId = userId,
+        isNewUser = isNew
+    };
+
+    return Ok(resJson);
 }
 
 
-        // POST add new user to DB
-        [HttpPost("AddNewUser")]
-        public ActionResult<int> PostAddNewUser([FromBody] User newUser)
+       
+    // GET: api/User/CheckIfExists?email=example@email.com
+    [HttpGet("CheckIfExists")]
+    public ActionResult<object> CheckIfUserExists([FromQuery] string email)
+    {
+        try
         {
-            int result = newUser.AddUser(newUser);
+            int userId = BL.User.CheckIfUserExists(email);
 
-            if (result == 0)
+            return Ok(new
             {
-                return Conflict("Email already exists or user could not be added.");
-            }
-
-            return Ok(result);
+                userId = userId,
+                exists = userId != -1
+            });
         }
-
-
-        // GET user by email
-        [HttpGet("GetUserByEmail/{email}")]
-        public ActionResult<User> GETUserByEmail(string email)
+        catch (Exception ex)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return BadRequest("Email is required.");
-            }
-
-            string decodedEmail = Uri.UnescapeDataString(email.Trim());
-            Console.WriteLine($" Received request for user: '{decodedEmail}'");
-
-            User user = new User().GetUser(decodedEmail);
-
-            if (user == null)
-            {
-                Console.WriteLine(" User not found.");
-                return NotFound("User not found.");
-            }
-
-            Console.WriteLine($"User found: {user.FullName}");
-            return Ok(user);
+            return StatusCode(500, "Server error: " + ex.Message);
         }
-
+    }
 
 
         // GET all users
@@ -112,26 +100,26 @@ public IActionResult GetUserById(int id)
 
 
 
-        //Update User Details 
         [HttpPut("UpdateUserDetails")]
-        public ActionResult<int> PUTUserDetails([FromBody] User user)
-        {
-            if (string.IsNullOrWhiteSpace(user.Email))
+            public ActionResult<int> PUTUserDetails([FromBody] User user)
             {
-                return BadRequest("Email is required.");
+                if (user.ID <= 0)
+                {
+                    return BadRequest("User ID is required.");
+                }
+
+                int result = user.UpdateUserDetailsById(user);
+
+                if (result == 0)
+                {
+                    Console.WriteLine("No changes made or user not found.");
+                    return NotFound("No changes made or user not found.");
+                }
+
+                Console.WriteLine($"User details updated successfully. Rows affected: {result}");
+                return Ok(result);
             }
 
-            int result = user.UpdateUserDetailsByEmail(user);
-
-            if (result == 0)
-            {
-                Console.WriteLine(" No changes made or user not found.");
-                return NotFound("No changes made or user not found.");
-            }
-
-            Console.WriteLine($"User details updated successfully. Rows affected: {result}");
-            return Ok(result);
-        }
 
         //Add friend
         [HttpPost("AddFriend")]

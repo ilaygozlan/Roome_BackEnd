@@ -16,11 +16,11 @@ namespace Roome_BackEnd.BL
         bool ownPet;
         bool smoke;
         bool isActive;
-        string token;
+        string jobStatus="";
 
         public User() { }
 
-        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive, string token)
+        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive,string jobStatus)
         {
             ID = id;
             Email = email;
@@ -32,9 +32,9 @@ namespace Roome_BackEnd.BL
             OwnPet = ownPet;
             Smoke = smoke;
             IsActive = isActive;
-            Token= token;
+            JobStatus=jobStatus;
         }
-
+        public string JobStatus{get=>jobStatus;set=>jobStatus=value;}
         public int ID { get => id; set => id = value; }
         public string Email { get => email; set => email = value; }
         public string FullName { get => fullName; set => fullName = value; }
@@ -45,19 +45,17 @@ namespace Roome_BackEnd.BL
         public bool OwnPet { get => ownPet; set => ownPet = value; }
         public bool Smoke { get => smoke; set => smoke = value; }
         public bool IsActive { get => isActive; set => isActive = value; }
-        public string Token { get => token; set => token = value; }
 
-        
-        public int AddUser(User NewUser)
+        public static (int userId, bool isNew) AddUser(User NewUser)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.AddNewUser(NewUser);
         }
 
-        public User GetUser(string useremail)
+        public static User GetUser(int userId)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
-            return dBserviecesuser.GetUser(useremail);
+            return dBserviecesuser.GetUser(userId);
         }
 
         public static List<User> GetAllUser()
@@ -72,10 +70,10 @@ namespace Roome_BackEnd.BL
             return dBserviecesuser.DeactivateUser(userEmail);
         }
 
-        public int UpdateUserDetailsByEmail(User user)
+        public int UpdateUserDetailsById(User user)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
-            return dBserviecesuser.UpdateUserDetailsByEmail(user);
+            return dBserviecesuser.UpdateUserDetailsById(user);
         }
         public static string AddFriend(int userId1, int userId2)
         {
@@ -133,6 +131,10 @@ namespace Roome_BackEnd.BL
             User user = db.GetUserById(userId);
             return user;
         }
+        public static int CheckIfUserExists(string email){
+          DBserviceUser db = new DBserviceUser();
+            return db.CheckIfUserExists(email);
+        }
     }
-    
+
 }

@@ -29,261 +29,134 @@ public SqlConnection connect()
 
     return new SqlConnection(cStr);
 }
-      //--------------------------------------------------------------------------------------------------
-    //update token
+    //--------------------------------------------------------------------------------------------------
+    // This method add new user
     //--------------------------------------------------------------------------------------------------
 
- private SqlCommand CreateCommandWithStoredProcedureUpdateToken(string spName, SqlConnection con, int userId, string expoPushToken)
-    {
-        SqlCommand cmd = new SqlCommand
-        {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
-        cmd.Parameters.AddWithValue("@UserId", userId);
-        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
-        return cmd;
-    }
-
-    public int UpdateToken(int userId, string expoPushToken)
-    {
-        using (SqlConnection con = Connect())
-        using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateToken("UPDATETOKEN", con, userId, expoPushToken))
-        {
-            try
-            {
-                con.Open();
-                return cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error updating token", ex);
-            }
-        }
-    }
-      //--------------------------------------------------------------------------------------------------
-    //Post token
-    //--------------------------------------------------------------------------------------------------
-
-private SqlCommand CreateCommandWithStoredProcedurePostToken(string spName, SqlConnection con, int userId, string expoPushToken)
-    {
-        SqlCommand cmd = new SqlCommand
-        {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
-        cmd.Parameters.AddWithValue("@UserId", userId);
-        cmd.Parameters.AddWithValue("@ExpoPushToken", expoPushToken);
-        return cmd;
-    }
-
-    public int PostToken(int userId, string expoPushToken)
-    {
-        using (SqlConnection con = Connect())
-        using (SqlCommand cmd = CreateCommandWithStoredProcedurePostToken("POSTTOKEN", con, userId, expoPushToken))
-        {
-            try
-            {
-                con.Open();
-                return cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error posting token", ex);
-            }
-        }
-    }
-    //--------------------------------------------------------------------------------------------------
-    // GetTokenByUserId
-    //--------------------------------------------------------------------------------------------------
-
-  private SqlCommand CreateCommandWithStoredProcedureGetToken(string spName, SqlConnection con, int userId)
-    {
-        SqlCommand cmd = new SqlCommand
-        {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
-        cmd.Parameters.AddWithValue("@UserId", userId);
-        return cmd;
-    }
-
-    public string GetToken(int userId)
-    {
-        using (SqlConnection con = Connect())
-        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetToken("GETTOKEN", con, userId))
-        {
-            try
-            {
-                con.Open();
-                object result = cmd.ExecuteScalar();
-                if (result != null && result != DBNull.Value)
-                    return result.ToString();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error retrieving token", ex);
-            }
-        }
-        return null;
-    }
-
- private SqlConnection Connect()
-{
-    string? cStr = configuration.GetConnectionString("myProjDB");
-    if (string.IsNullOrEmpty(cStr))
-    {
-        throw new Exception("Connection string 'myProjDB' not found in appsettings.json");
-    }
-    return new SqlConnection(cStr);
-}
-
-
-        //--------------------------------------------------------------------------------------------------
-        // This method add new user
-        //--------------------------------------------------------------------------------------------------
-
-        public int AddNewUser(User user)
+public (int userId, bool isNew) AddNewUser(User user)
 {
     using (SqlConnection con = connect())
     using (SqlCommand cmd = CreateCommandWithStoredProcedureAddNewUser("sp_AddNewUser", con, user.Email, user.FullName, user.PhoneNumber,
-        user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke,user.Token ))
+        user.Gender, user.BirthDate, user.ProfilePicture, user.OwnPet, user.Smoke, user.JobStatus))
     {
         try
         {
-            con.Open();
-            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+           
+            SqlParameter userIdParam = new SqlParameter("@UserId", SqlDbType.Int)
             {
                 Direction = ParameterDirection.Output
             };
-            cmd.Parameters.Add(outputParam);
+            cmd.Parameters.Add(userIdParam);
 
+            SqlParameter isNewParam = new SqlParameter("@IsNew", SqlDbType.Bit)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(isNewParam);
+
+            con.Open();
             cmd.ExecuteNonQuery();
 
-            int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
+            int userId = (userIdParam.Value != DBNull.Value) ? (int)userIdParam.Value : -1;
+            bool isNew = (isNewParam.Value != DBNull.Value) && (bool)isNewParam.Value;
 
-            if (numEffected == 0)
-            {
-                Console.WriteLine("Failed to add user. Email might already exist.");
-            }
-            else
-            {
-                Console.WriteLine($"User added successfully. Rows affected: {numEffected}");
-            }
-
-            return numEffected;
+            return (userId, isNew);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
             throw new Exception("Failed to execute stored procedure", ex);
         }
     }
 }
 
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to add new user
-    //---------------------------------------------------------------------------------
-
-    private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
-        string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
-        char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string Token)
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to add new user
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureAddNewUser(
+    string spName, SqlConnection con, string Email, string FullName, string PhoneNumber,
+    char Gender, DateTime BirthDate, string ProfilePicture, bool OwnPet, bool Smoke, string JobStatus)
+{
+    SqlCommand cmd = new SqlCommand
     {
-        SqlCommand cmd = new SqlCommand
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@Email", Email);
+    cmd.Parameters.AddWithValue("@FullName", FullName);
+    cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
+    cmd.Parameters.AddWithValue("@Gender", Gender);
+    cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
+    cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
+    cmd.Parameters.AddWithValue("@Smoke", Smoke);
+    cmd.Parameters.AddWithValue("@JobStatus", JobStatus ?? (object)DBNull.Value);
+
+    return cmd;
+}
+
+//--------------------------------------------------------------------------------------------------
+// This method gets user details by ID
+//--------------------------------------------------------------------------------------------------
+public User GetUser(int userId)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserById", con, userId))
+    {
+        try
         {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
-        cmd.Parameters.AddWithValue("@Email", Email);
-        cmd.Parameters.AddWithValue("@FullName", FullName);
-        cmd.Parameters.AddWithValue("@PhoneNumber", PhoneNumber);
-        cmd.Parameters.AddWithValue("@Gender", Gender);
-        cmd.Parameters.AddWithValue("@BirthDate", BirthDate);
-        cmd.Parameters.AddWithValue("@ProfilePicture", ProfilePicture ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@OwnPet", OwnPet);
-        cmd.Parameters.AddWithValue("@Smoke", Smoke);
-        cmd.Parameters.AddWithValue("@Token", Token);
-
-
-        return cmd;
-    }
-
-
-
-    //--------------------------------------------------------------------------------------------------
-    // This method get user deatils by email
-    //--------------------------------------------------------------------------------------------------
-
-        public User GetUser(string useremail)
-        {
-            using (SqlConnection con = connect())
-            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetUser("sp_GetUserByEmail", con, useremail))
+            con.Open();
+            using (SqlDataReader dataReader = cmd.ExecuteReader())
             {
-                try
+                if (dataReader.Read())
                 {
-                    con.Open();
-                    using (SqlDataReader dataReader = cmd.ExecuteReader())
+                    return new User
                     {
-                        if (dataReader.Read())
-                        {
-                            return new User
-                            {
-                                ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
-                                Email = dataReader["Email"]?.ToString() ?? "",
-                                FullName = dataReader["FullName"]?.ToString() ?? "",
-                                PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
-                                Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
-                                ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
-                                BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
-                                Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
-                                OwnPet = dataReader["OwnPet"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPet"]) : false,
-                                IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
-                            };
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                    throw new Exception("Failed to retrieve user", ex);
+                        ID = dataReader["ID"] != DBNull.Value ? Convert.ToInt32(dataReader["ID"]) : 0,
+                        Email = dataReader["Email"]?.ToString() ?? "",
+                        FullName = dataReader["FullName"]?.ToString() ?? "",
+                        PhoneNumber = dataReader["PhoneNumber"]?.ToString() ?? "",
+                        Gender = dataReader["Sex"] != DBNull.Value ? Convert.ToChar(dataReader["Sex"]) : ' ',
+                        ProfilePicture = dataReader["ProfilePicture"]?.ToString() ?? "",
+                        BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
+                        Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
+                        OwnPet = dataReader["OwnPet"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPet"]) : false,
+                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                        JobStatus=dataReader["JobStatus"]?.ToString() ?? ""
+                    };
                 }
             }
-
-            return null; 
         }
-
-
-
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to get user by email 
-    //---------------------------------------------------------------------------------
-
-     private SqlCommand CreateCommandWithStoredProcedureGetUser(String spName, SqlConnection con, string useremail)
+        catch (Exception ex)
         {
-            SqlCommand cmd = new SqlCommand
-            {
-                Connection = con,
-                CommandText = spName,
-                CommandTimeout = 10,
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.AddWithValue("@Email", useremail.Trim());
-
-            return cmd;
+            Console.WriteLine($"Error: {ex.Message}");
+            throw new Exception("Failed to retrieve user", ex);
         }
+    }
+
+    return null; 
+}
+
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to get user by ID 
+//---------------------------------------------------------------------------------
+private SqlCommand CreateCommandWithStoredProcedureGetUser(string spName, SqlConnection con, int userId)
+{
+    SqlCommand cmd = new SqlCommand
+    {
+        Connection = con,
+        CommandText = spName,
+        CommandTimeout = 10,
+        CommandType = CommandType.StoredProcedure
+    };
+
+    cmd.Parameters.AddWithValue("@ID", userId);
+
+    return cmd;
+}
+
 
      //--------------------------------------------------------------------------------------------------
     // This method get all users
@@ -315,9 +188,7 @@ private SqlCommand CreateCommandWithStoredProcedurePostToken(string spName, SqlC
                             BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
                             Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
                             OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
-                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
-                            Token = dataReader["Token"]?.ToString() ?? "",
-
+                            IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
                         };
 
                         allUsers.Add(user);
@@ -413,14 +284,14 @@ public int DeactivateUser(string userEmail)
     }
    
 
-   //--------------------------------------------------------------------------------------------------
-    // This method Update User Details By Email
-    //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// This method Update User Details By ID
+//--------------------------------------------------------------------------------------------------
 
-    public int UpdateUserDetailsByEmail(User user)
+public int UpdateUserDetailsById(User user)
 {
     using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsByEmail("UpdateUserDetailsByEmail", con, user))
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureUpdateUserDetailsById("UpdateUserDetails", con, user))
     {
         try
         {
@@ -433,7 +304,7 @@ public int DeactivateUser(string userEmail)
 
             cmd.ExecuteNonQuery();
             int numEffected = (outputParam.Value != DBNull.Value) ? (int)outputParam.Value : 0;
-            
+
             Console.WriteLine($"🔄 Rows affected: {numEffected}");
             return numEffected;
         }
@@ -445,11 +316,11 @@ public int DeactivateUser(string userEmail)
     }
 }
 
-      //---------------------------------------------------------------------------------
-    // Create the SqlCommand using a stored procedure to Update User Details
-    //---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
+// Create the SqlCommand using a stored procedure to Update User Details
+//---------------------------------------------------------------------------------
 
-    private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsByEmail(string spName, SqlConnection con, User user)
+private SqlCommand CreateCommandWithStoredProcedureUpdateUserDetailsById(string spName, SqlConnection con, User user)
 {
     SqlCommand cmd = new SqlCommand
     {
@@ -459,7 +330,7 @@ public int DeactivateUser(string userEmail)
         CommandType = CommandType.StoredProcedure
     };
 
-    cmd.Parameters.AddWithValue("@Email", user.Email.Trim());
+    cmd.Parameters.AddWithValue("@UserID", user.ID);
     cmd.Parameters.AddWithValue("@FullName", (object?)user.FullName ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@PhoneNumber", (object?)user.PhoneNumber ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Sex", (object?)user.Gender ?? DBNull.Value);
@@ -468,10 +339,11 @@ public int DeactivateUser(string userEmail)
     cmd.Parameters.AddWithValue("@OwnPath", (object?)user.OwnPet ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@Smoke", (object?)user.Smoke ?? DBNull.Value);
     cmd.Parameters.AddWithValue("@IsActive", (object?)user.IsActive ?? DBNull.Value);
-    cmd.Parameters.AddWithValue("@Token", (object?)user.Token ?? DBNull.Value);
+    cmd.Parameters.AddWithValue("@JobStatus", (object?)user.JobStatus ?? DBNull.Value);
 
     return cmd;
 }
+
 
 
    //--------------------------------------------------------------------------------------------------
@@ -546,7 +418,9 @@ public List<User> GetUserFriends(int userId)
                         BirthDate = dataReader["BirthDate"] != DBNull.Value ? Convert.ToDateTime(dataReader["BirthDate"]) : DateTime.MinValue,
                         Smoke = dataReader["Smoke"] != DBNull.Value ? Convert.ToBoolean(dataReader["Smoke"]) : false,
                         OwnPet = dataReader["OwnPath"] != DBNull.Value ? Convert.ToBoolean(dataReader["OwnPath"]) : false,
-                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false
+                        IsActive = dataReader["IsActive"] != DBNull.Value ? Convert.ToBoolean(dataReader["IsActive"]) : false,
+                          JobStatus = dataReader["JobStatus"]?.ToString() ?? ""
+
                     };
 
                     friends.Add(friend);
@@ -582,7 +456,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 }
 
    //--------------------------------------------------------------------------------------------------
-    // This method Get Remove Friends
+    // This method Remove Friends
     //--------------------------------------------------------------------------------------------------
 
     public string RemoveFriend(int userId1, int userId2)
@@ -629,7 +503,6 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
 
    public string UserLikeApartment(int userId, int apartmentId)
    {
-    Console.WriteLine($" Trying to like apartment. User: {userId}, Apartment: {apartmentId}");
        using (SqlConnection con = connect())
        using (SqlCommand cmd = CreateCommandWithStoredProcedureUserLikeApartment("sp_UserLikeApartment", con, userId, apartmentId))
        {
@@ -637,12 +510,11 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
            {
                con.Open();
                cmd.ExecuteNonQuery();
-               Console.WriteLine(" Insert successful");
                return "Like added successfully";
            }
            catch (SqlException ex)
            {
-               Console.WriteLine($"sql Error: {ex.Message}");
+               Console.WriteLine($"Error: {ex.Message}");
                throw new Exception("Failed to like the apartment", ex);
            }
        }
@@ -828,7 +700,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetUserFriends(string spName,
             {
                 try
                 {
-                    con.Open();
+                    con.Open(); // ✅ Ensure connection is open before reading data
 
                     Console.WriteLine($"Fetching owned apartments for User ID={userId}");
 
@@ -951,6 +823,43 @@ public User GetUserById(int userId)
         catch (Exception ex)
         {
             throw new Exception("Error fetching user info by ID", ex);
+        }
+    }
+}
+
+        //---------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to check if user exists
+        //---------------------------------------------------------------------------------
+
+public int CheckIfUserExists(string email)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand("checkIfUserExist", con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+
+        // קלט: האימייל של המשתמש
+        cmd.Parameters.AddWithValue("@Email", email);
+
+        // פלט: userId או -1
+        SqlParameter userIdParam = new SqlParameter("@UserId", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output
+        };
+        cmd.Parameters.Add(userIdParam);
+
+        try
+        {
+            con.Open();
+            cmd.ExecuteNonQuery();
+
+            int userId = (userIdParam.Value != DBNull.Value) ? (int)userIdParam.Value : -1;
+            return userId;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error checking if user exists: " + ex.Message);
+            throw;
         }
     }
 }
