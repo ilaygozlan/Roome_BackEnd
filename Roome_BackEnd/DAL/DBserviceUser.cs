@@ -961,10 +961,9 @@ public int CheckIfUserExists(string email)
     {
         cmd.CommandType = CommandType.StoredProcedure;
 
-        // קלט: האימייל של המשתמש
+      
         cmd.Parameters.AddWithValue("@Email", email);
 
-        // פלט: userId או -1
         SqlParameter userIdParam = new SqlParameter("@UserId", SqlDbType.Int)
         {
             Direction = ParameterDirection.Output
