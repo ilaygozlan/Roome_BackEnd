@@ -99,7 +99,7 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
         }
 
 
-
+            //Update User Details
         [HttpPut("UpdateUserDetails")]
             public ActionResult<int> PUTUserDetails([FromBody] User user)
             {
@@ -108,11 +108,10 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
                     return BadRequest("User ID is required.");
                 }
 
-                int result = user.UpdateUserDetailsById(user);
+                int result = BL.User.UpdateUserDetailsById(user);
 
                 if (result == 0)
                 {
-                    Console.WriteLine("No changes made or user not found.");
                     return NotFound("No changes made or user not found.");
                 }
 
