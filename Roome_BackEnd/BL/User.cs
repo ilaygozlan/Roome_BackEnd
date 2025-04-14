@@ -73,7 +73,7 @@ namespace Roome_BackEnd.BL
             return dBserviecesuser.DeactivateUser(userEmail);
         }
 
-        public int UpdateUserDetailsById(User user)
+        public static int UpdateUserDetailsById(User user)
         {
             DBserviceUser dBserviecesuser = new DBserviceUser();
             return dBserviecesuser.UpdateUserDetailsById(user);
