@@ -44,6 +44,36 @@ namespace Roome_BackEnd.Controllers
             return Ok(uploadedImages);
 
         }
+
+        [HttpPost("uploadProfileImage")]
+        public async Task<IActionResult> UploadSingleImage([FromForm] IFormFile file)
+        {
+        
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+      
+            string rootPath = Directory.GetCurrentDirectory();
+            string uploadDir = Path.Combine(rootPath, "wwwroot", "uploadedFiles");
+
+
+            string filePath = Path.Combine(uploadDir, file.FileName);
+
+            
+            using (var stream = System.IO.File.Create(filePath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+           
+            string imageUrl = $"uploadedFiles/{file.FileName}";
+
+         
+            return Ok(new { url = imageUrl });
+        }
+
+
     }
 }
 
