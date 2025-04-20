@@ -45,7 +45,7 @@ namespace Roome_BackEnd.DAL
                 {
                     cmd.ExecuteNonQuery();
                     int rowsAffected = cmd.ExecuteNonQuery();
-                    if(rowsAffected > 0 ){
+                    if(rowsAffected >= 0 ){
                         return new { message = "Images uploaded successfully!", urls = imagesLinks };
                     }
                     else return new{message = "Error"};
