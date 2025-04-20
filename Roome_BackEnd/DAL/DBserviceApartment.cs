@@ -433,7 +433,8 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
                 apartment.IsActive,
                 apartment.PropertyTypeID,
                 apartment.Floor,
-                apartment.Description
+                apartment.Description,
+                apartment.NumberOfRoommates
             );
 
             try
@@ -459,7 +460,7 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
             int userID, int price, int amountOfRooms, string location,
             bool allowPet, bool allowSmoking, bool gardenBalcony, int parkingSpace,
             DateTime entryDate, DateTime exitDate, bool isActive, int propertyTypeID,
-            int floor, string description
+            int floor, string description,int numberOfRoommates
             )
         {
             SqlCommand cmd = new()
@@ -484,6 +485,7 @@ public bool ToggleApartmentActiveStatus(int apartmentId)
             cmd.Parameters.AddWithValue("@PropertyTypeID", propertyTypeID);
             cmd.Parameters.AddWithValue("@Floor", floor);
             cmd.Parameters.AddWithValue("@Description", description);
+            cmd.Parameters.AddWithValue("@NumberOfRoommates", numberOfRoommates);
 
             return cmd;
         }

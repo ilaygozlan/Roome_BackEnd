@@ -11,38 +11,45 @@ namespace Roome_BackEnd.Controllers
     public class UploadImageCpntroller : ControllerBase
     {
 
-        // POST api/<uploadController>
         [HttpPost("uploadApartmentImage/{apartmentId}")]
         public async Task<IActionResult> Post([FromForm] List<IFormFile> files, [FromRoute] int apartmentId)
         {
-
             List<string> imageLinks = new List<string>();
 
-            string path = System.IO.Directory.GetCurrentDirectory();
+            string rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploadedFiles");
 
-            long size = files.Sum(f => f.Length);
+         
+            if (!Directory.Exists(rootPath))
+            {
+                Directory.CreateDirectory(rootPath);
+            }
 
             foreach (var formFile in files)
             {
                 if (formFile.Length > 0)
                 {
-                    var filePath = Path.Combine(path, "uploadedFiles/" + formFile.FileName);
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName); // למניעת כפילויות
+                    string fullPath = Path.Combine(rootPath, fileName);
 
-                    using (var stream = System.IO.File.Create(filePath))
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
                     {
                         await formFile.CopyToAsync(stream);
                     }
-                    imageLinks.Add(formFile.FileName);
+
+                    string relativePath = "/uploadedFiles/" + fileName;
+                    imageLinks.Add(relativePath);
                 }
             }
 
-            if(files.Count == 0) { return NotFound(); }
+            if (imageLinks.Count == 0)
+            {
+                return NotFound("No files uploaded");
+            }
 
-            // Return status code 
-            string imageUrlsCsv = string.Join(",", imageLinks); // Convert List<string> to CSV string
+            string imageUrlsCsv = string.Join(",", imageLinks);
             object uploadedImages = ApartmantImages.UploadImages(imageUrlsCsv, apartmentId);
-            return Ok(uploadedImages);
 
+            return Ok(uploadedImages);
         }
 
         [HttpPost("uploadProfileImage")]
@@ -75,7 +82,7 @@ namespace Roome_BackEnd.Controllers
 
 
     }
-}
+    }
 
 
 
