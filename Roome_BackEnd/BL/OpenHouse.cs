@@ -62,7 +62,13 @@ namespace Roome_BackEnd.BL
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.GetOwnerId(openHouseId);
-        }           
+        }
+        public static bool DeleteRegistrationForOpenHouse(int openHouseId, int userId)
+        {
+            DBservicesOpenHouse dbService = new DBservicesOpenHouse();
+            return dbService.DeleteRegistrationForOpenHouse(openHouseId, userId);
+        }
+
 
 
     }

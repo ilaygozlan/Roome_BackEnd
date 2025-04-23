@@ -142,7 +142,26 @@ public IActionResult GetOwnerId(int openHouseId)
             return Ok("Open house and all its registrations deleted successfully.");
         }
 
+        [HttpDelete("DeleteRegistration/{openHouseId}/{userId}")]
+        public ActionResult<string> DeleteRegistrationForOpenHouse([FromRoute] int openHouseId, [FromRoute] int userId)
+        {
+            if (openHouseId <= 0 || userId <= 0)
+            {
+                return BadRequest("Invalid Open House ID or User ID.");
+            }
+
+            bool success = OpenHouse.DeleteRegistrationForOpenHouse(openHouseId, userId);
+
+            if (!success)
+            {
+                return NotFound("Registration not found or failed to delete.");
+            }
+
+            return Ok("Registration deleted successfully.");
+        }
+
     }
+
 
     // DTO for Open House Registration
     public class RegisterOpenHouseRequest
