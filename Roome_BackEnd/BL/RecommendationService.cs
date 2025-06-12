@@ -1,3 +1,5 @@
+using Roome_BackEnd.BL;
+
 public class RecommendationService
 {
     private static double CalculateUserSimilarity(User u1, User u2)
