@@ -1,4 +1,6 @@
 using Roome_BackEnd.BL;
+using System.Dynamic;
+using Newtonsoft.Json;
 
 public class RecommendationService
 {
@@ -29,8 +31,11 @@ public class RecommendationService
 
     private static double CalculateCombinedSimilarity(User target, User other)
     {
-        var targetLikes = target.GetUserLikedApartments(target.ID).Select(a => (int)a.id).ToHashSet();
-        var otherLikes = other.GetUserLikedApartments(other.ID).Select(a => (int)a.id).ToHashSet();
+        var targetLikes = target.GetUserLikedApartments(target.ID)
+            .Select(a => (int)((IDictionary<string, object>)a)["ApartmentID"]).ToHashSet();
+
+        var otherLikes = other.GetUserLikedApartments(other.ID)
+            .Select(a => (int)((IDictionary<string, object>)a)["ApartmentID"]).ToHashSet();
 
         int intersection = targetLikes.Intersect(otherLikes).Count();
         int union = targetLikes.Union(otherLikes).Count();
@@ -68,7 +73,6 @@ public class RecommendationService
         if (likedApartment.Location == candidate.Location) score += 1;
         if (likedApartment.AllowPet == candidate.AllowPet) score += 1;
         if (likedApartment.AllowSmoking == candidate.AllowSmoking) score += 1;
-        if (likedApartment.PropertyTypeID == candidate.PropertyTypeID) score += 1;
 
         return score;
     }
@@ -78,20 +82,27 @@ public class RecommendationService
         var allUsers = User.GetAllUser();
         var allApartments = ApartmentService.GetAllApartments();
         var user = allUsers.First(u => u.ID == userId);
-        var liked = user.GetUserLikedApartments(userId).Select(a => (int)a.id).ToHashSet();
+
+        var likedRaw = user.GetUserLikedApartments(userId).ToList();
+
+      
+
+        var liked = likedRaw
+            .Select(a => (int)((IDictionary<string, object>)a)["ApartmentID"])
+            .ToHashSet();
 
         var contentScores = new Dictionary<int, double>();
         foreach (var apartment in allApartments)
         {
-            if (liked.Contains((int)apartment.id)) continue;
+            if (liked.Contains((int)apartment.Id)) continue;
 
             double totalScore = 0;
-            foreach (var likedApt in user.GetUserLikedApartments(userId))
+            foreach (var likedApt in likedRaw)
             {
                 totalScore += CalculateContentScore(likedApt, apartment);
             }
 
-            contentScores[(int)apartment.id] = totalScore;
+            contentScores[apartment.Id] = totalScore;
         }
 
         var similarUsers = GetSimilarUsers(userId, allUsers);
@@ -101,7 +112,7 @@ public class RecommendationService
         {
             foreach (var apt in similarUser.GetUserLikedApartments(similarUser.ID))
             {
-                int aptId = (int)apt.id;
+                int aptId = (int)((IDictionary<string, object>)apt)["ApartmentID"];
                 if (liked.Contains(aptId)) continue;
 
                 if (!collaborativeScores.ContainsKey(aptId))
@@ -114,7 +125,7 @@ public class RecommendationService
         var finalScores = new Dictionary<int, double>();
         foreach (var apartment in allApartments)
         {
-            int aptId = (int)apartment.id;
+            int aptId = apartment.Id;
             if (liked.Contains(aptId)) continue;
 
             double collabScore = collaborativeScores.GetValueOrDefault(aptId, 0);
@@ -127,7 +138,7 @@ public class RecommendationService
         return finalScores
             .OrderByDescending(kvp => kvp.Value)
             .Take(10)
-            .Select(kvp => allApartments.First(a => (int)a.id == kvp.Key))
+            .Select(kvp => allApartments.First(a => a.Id == kvp.Key))
             .ToList();
     }
 }
