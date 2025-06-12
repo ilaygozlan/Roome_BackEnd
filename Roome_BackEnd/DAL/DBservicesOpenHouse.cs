@@ -342,6 +342,72 @@ namespace Roome_BackEnd.DAL
 
             return cmd;
         }
+        //--------------------------------------------------------------------------------------------------
+        // This method deletes a registration for an open house
+        //--------------------------------------------------------------------------------------------------
+        public bool DeleteRegistrationForOpenHouse(int openHouseId, int userId)
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureDeleteRegistration("sp_DeleteRegistrationForOpenHouse", con, openHouseId, userId))
+            {
+                try
+                {
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+
+                    int result = (int)cmd.Parameters["@ReturnVal"].Value;
+
+                    if (result == 1)
+                    {
+                        Console.WriteLine($"✅ Registration deleted: User {userId}, Open House {openHouseId}.");
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"⚠️ Failed to delete registration. Return code: {result}");
+                        return false;
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    Console.WriteLine($"SQL Error: {ex.Message}");
+                    throw new Exception("Database error occurred while deleting registration", ex);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    throw new Exception("Failed to delete registration", ex);
+                }
+            }
+        }
+
+
+        //--------------------------------------------------------------------------------------------------
+        // Create the SqlCommand using a stored procedure to delete an Registration for open house
+        //-------------------------------------------------------------------------------------------------
+        private SqlCommand CreateCommandWithStoredProcedureDeleteRegistration(string spName, SqlConnection con, int openHouseId, int userId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
+            cmd.Parameters.AddWithValue("@UserID", userId);
+
+     
+            SqlParameter returnParameter = new SqlParameter("@ReturnVal", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.ReturnValue
+            };
+            cmd.Parameters.Add(returnParameter);
+
+            return cmd;
+        }
+
 
     }
 }

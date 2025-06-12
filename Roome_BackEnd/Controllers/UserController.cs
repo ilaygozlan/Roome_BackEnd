@@ -119,6 +119,28 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
                 return Ok(result);
             }
 
+            [HttpGet("GetRecommendedApartments/{userId}")]
+            public ActionResult<List<dynamic>> GetRecommendedApartments(int userId)
+            {
+                if (userId <= 0)
+                    return BadRequest("Invalid user ID.");
+
+                try
+                {
+                    var recommendations = RecommendationService.GetHybridRecommendations(userId);
+
+                    if (recommendations == null || recommendations.Count == 0)
+                        return NotFound("No recommended apartments found.");
+
+                    return Ok(recommendations);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Error generating recommendations: {ex.Message}");
+                }
+            }
+
+
 
         //Add friend
         [HttpPost("AddFriend")]
