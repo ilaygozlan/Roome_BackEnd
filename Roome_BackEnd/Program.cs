@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.SignalR;
+using Roome_BackEnd.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -15,6 +18,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
+
 
 var app = builder.Build();
 
@@ -30,4 +35,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.UseStaticFiles();
+app.MapHub<ChatHub>("/chatHub");
+
 app.Run();
