@@ -16,7 +16,6 @@
   <ItemGroup>
     <Folder Include="BL\" />
     <Folder Include="Controllers\" />
-    <Folder Include="DAL\" />
   </ItemGroup>
 
 </Project>

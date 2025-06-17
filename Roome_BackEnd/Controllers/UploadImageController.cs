@@ -28,7 +28,7 @@ namespace Roome_BackEnd.Controllers
             {
                 if (formFile.Length > 0)
                 {
-                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName); // למניעת כפילויות
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName); 
                     string fullPath = Path.Combine(rootPath, fileName);
 
                     using (var stream = new FileStream(fullPath, FileMode.Create))
