@@ -1,0 +1,12 @@
+env/
+venv/
+tf-env-310/
+__pycache__/
+*.pyc
+*.pyd
+*.dll
+*.exe
+*.so
+bin/
+obj/
+.vs/
