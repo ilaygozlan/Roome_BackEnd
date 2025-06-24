@@ -18,7 +18,7 @@ namespace Roome_BackEnd.Controllers
 
             string rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploadedFiles");
 
-         
+
             if (!Directory.Exists(rootPath))
             {
                 Directory.CreateDirectory(rootPath);
@@ -28,7 +28,7 @@ namespace Roome_BackEnd.Controllers
             {
                 if (formFile.Length > 0)
                 {
-                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName); 
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(formFile.FileName);
                     string fullPath = Path.Combine(rootPath, fileName);
 
                     using (var stream = new FileStream(fullPath, FileMode.Create))
@@ -51,9 +51,8 @@ namespace Roome_BackEnd.Controllers
 
             return Ok(uploadedImages);
         }
-       
 
-
+      
     }
 }
 

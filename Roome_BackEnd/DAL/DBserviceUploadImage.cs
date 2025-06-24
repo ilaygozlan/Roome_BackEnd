@@ -45,10 +45,11 @@ namespace Roome_BackEnd.DAL
                 {
                     cmd.ExecuteNonQuery();
                     int rowsAffected = cmd.ExecuteNonQuery();
-                    if(rowsAffected >= 0 ){
+                    if (rowsAffected >= 0)
+                    {
                         return new { message = "Images uploaded successfully!", urls = imagesLinks };
                     }
-                    else return new{message = "Error"};
+                    else return new { message = "Error" };
                 }
                 catch (SqlException sqlEx)
                 {
@@ -77,7 +78,7 @@ namespace Roome_BackEnd.DAL
             // Output Parameter
             SqlParameter resultParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
             {
-            Direction = ParameterDirection.Output
+                Direction = ParameterDirection.Output
             };
             cmd.Parameters.Add(resultParam);
             cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
@@ -85,6 +86,33 @@ namespace Roome_BackEnd.DAL
 
             return cmd;
         }
+
+        public List<string> GetImageUrlsForApartment(int apartmentId)
+        {
+            List<string> imageUrls = new();
+
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("GetApartmentImages", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@ApartmentId", apartmentId);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string url = reader["ImageUrl"]?.ToString() ?? "";
+                        if (!string.IsNullOrWhiteSpace(url))
+                        {
+                            imageUrls.Add(url);
+                        }
+                    }
+                }
+            }
+
+            return imageUrls;
+        }
+
 
     }
 }
