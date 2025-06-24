@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.FileProviders;
 using Roome_BackEnd.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+var keyPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "vision-key.json");
+Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
 
 builder.Services.AddCors(options =>
 {
@@ -28,6 +30,13 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles")),
+    RequestPath = "/uploadedFiles"
+});
+
 app.UseAuthorization();
 
 app.MapControllers();
