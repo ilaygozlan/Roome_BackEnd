@@ -3,8 +3,7 @@ using Roome_BackEnd.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var keyPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "vision-key.json");
-Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", keyPath);
+
 
 builder.Services.AddCors(options =>
 {
