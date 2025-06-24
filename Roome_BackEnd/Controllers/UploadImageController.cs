@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Roome_BackEnd.BL;
 using Roome_BackEnd.DAL;
-using Newtonsoft.Json;
-using System;
 
 namespace Roome_BackEnd.Controllers
 {
@@ -10,14 +8,12 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class UploadImageCpntroller : ControllerBase
     {
-
         [HttpPost("uploadApartmentImage/{apartmentId}")]
         public async Task<IActionResult> Post([FromForm] List<IFormFile> files, [FromRoute] int apartmentId)
         {
-            List<string> imageLinks = new List<string>();
+            List<string> imageLinks = new();
 
-            string rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploadedFiles");
-
+            string rootPath = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles");
 
             if (!Directory.Exists(rootPath))
             {
@@ -51,12 +47,5 @@ namespace Roome_BackEnd.Controllers
 
             return Ok(uploadedImages);
         }
-
-      
     }
 }
-
-
-
-
-
