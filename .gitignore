@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 Roome_BackEnd/Properties/launchSettings.json
+Roome_BackEnd/App_Data/vision-key.json

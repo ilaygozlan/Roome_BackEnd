@@ -11,7 +11,7 @@ namespace Roome_BackEnd.Services
         public async Task<List<string>> DetectFurnitureLabelsFromUrlAsync(string imageUrl)
         {
             var client = await ImageAnnotatorClient.CreateAsync();
-            var image = Image.FetchFromUri(imageUrl); // תיקון כאן
+            var image = Image.FetchFromUri(imageUrl); 
             var response = await client.DetectLabelsAsync(image);
 
             return response
