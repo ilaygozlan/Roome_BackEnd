@@ -24,7 +24,7 @@ namespace Roome_BackEnd.Controllers
         }
 
         [HttpPost("SaveMessage")]
-        public IActionResult SaveMessage([FromBody] ChatMessageDto messageDto)
+        public async Task<IActionResult> SaveMessage([FromBody] ChatMessageDto messageDto)
         {
             ChatMessage message = new ChatMessage
             {
@@ -34,9 +34,11 @@ namespace Roome_BackEnd.Controllers
                 SentAt = DateTime.UtcNow
             };
 
-            dbService.AddChatMessage(message);
+            await dbService.AddChatMessage(message); 
+
             return Ok();
         }
+
 
         [HttpGet("GetMessages/{user1}/{user2}")]
         public IActionResult GetMessages(int user1, int user2)

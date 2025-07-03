@@ -32,27 +32,42 @@ namespace Roome_BackEnd.DAL
             con.Open();
             return con;
         }
+        public async Task AddChatMessage(ChatMessage message)
+{
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = new SqlCommand("sp_AddChatMessage", con))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
+        cmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
+        cmd.Parameters.AddWithValue("@Content", message.Content);
 
-        public void AddChatMessage(ChatMessage message)
-        {
-            using (SqlConnection con = connect())
-            using (SqlCommand cmd = new SqlCommand("sp_AddChatMessage", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
-                cmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
-                cmd.Parameters.AddWithValue("@Content", message.Content);
-                int messageId = Convert.ToInt32(cmd.ExecuteScalar());
+        int messageId = Convert.ToInt32(cmd.ExecuteScalar());
 
-            SqlCommand readCmd = new SqlCommand(@"
+        SqlCommand readCmd = new SqlCommand(@"
             INSERT INTO MessageReads (MessageId, UserId, IsRead)
             VALUES (@MessageId, @UserId, 0)", con);
-        
-            readCmd.Parameters.AddWithValue("@MessageId", messageId);
-            readCmd.Parameters.AddWithValue("@UserId", message.ToUserId);
-            readCmd.ExecuteNonQuery();                
-                }
+
+        readCmd.Parameters.AddWithValue("@MessageId", messageId);
+        readCmd.Parameters.AddWithValue("@UserId", message.ToUserId);
+        readCmd.ExecuteNonQuery();
+
+        SqlCommand tokenCmd = new SqlCommand("SELECT Token FROM Users WHERE ID = @ToUserId", con);
+        tokenCmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
+        string pushToken = tokenCmd.ExecuteScalar()?.ToString();
+
+        SqlCommand nameCmd = new SqlCommand("SELECT FullName FROM Users WHERE ID = @FromUserId", con);
+        nameCmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
+        string senderName = nameCmd.ExecuteScalar()?.ToString();
+
+        if (!string.IsNullOrEmpty(pushToken))
+        {
+            var pushService = new PushNotificationService();
+            await pushService.SendChatNotification(pushToken, senderName, message.Content);
         }
+    }
+}
+
 
         public List<ChatMessage> GetChatMessages(int user1Id, int user2Id)
         {
