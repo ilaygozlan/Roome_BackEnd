@@ -7,7 +7,7 @@ public class PushNotificationService
 {
     private static readonly HttpClient client = new HttpClient();
 
-    public async Task SendChatNotification(string pushToken, string senderName, string messageContent)
+    public async Task SendChatNotification(string pushToken, string senderName, string messageContent, int fromUserId)
     {
         var payload = new
         {
@@ -15,13 +15,23 @@ public class PushNotificationService
             sound = "default",
             title = $"הודעה מ{senderName}",
             body = messageContent,
-            data = new { sender = senderName }
+            data = new
+            {
+                type = "chat",
+                sender = senderName,
+                fromUserId = fromUserId
+            }
         };
 
-        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate");
 
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync("https://exp.host/--/api/v2/push/send", content);
-        string result = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("Expo push result: " + result);
+
+        var result = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Expo push result: {result}");
     }
+
 }

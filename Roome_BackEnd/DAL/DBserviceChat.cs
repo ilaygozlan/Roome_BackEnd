@@ -83,7 +83,8 @@ namespace Roome_BackEnd.DAL
                     if (!string.IsNullOrEmpty(pushToken))
                     {
                         var pushService = new PushNotificationService();
-                        await pushService.SendChatNotification(pushToken, senderName, message.Content);
+                        await pushService.SendChatNotification(pushToken, senderName, message.Content, message.FromUserId);
+
                     }
                 }
             }
