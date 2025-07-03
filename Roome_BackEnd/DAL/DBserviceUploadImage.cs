@@ -113,6 +113,29 @@ namespace Roome_BackEnd.DAL
             return imageUrls;
         }
 
+        public bool DeleteImageByUrl(string imageUrl)
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("DeleteApartmentImageByUrl", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@ImageUrl", imageUrl);
+
+                try
+                {
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+                catch (SqlException sqlEx)
+                {
+                    throw new Exception("Database error occurred during image deletion", sqlEx);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to delete image", ex);
+                }
+            }
+        }
 
     }
 }

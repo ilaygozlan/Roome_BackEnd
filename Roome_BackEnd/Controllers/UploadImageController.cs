@@ -47,5 +47,26 @@ namespace Roome_BackEnd.Controllers
 
             return Ok(uploadedImages);
         }
+        [HttpDelete("deleteApartmentImage")]
+        public IActionResult DeleteImage([FromQuery] string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                return BadRequest("Image URL is required");
+            }
+
+            DBserviceUploadImage db = new();
+            bool success = db.DeleteImageByUrl(imageUrl);
+
+            if (success)
+            {
+                return Ok(new { message = "Image deleted successfully" });
+            }
+            else
+            {
+                return NotFound("Image not found or could not be deleted");
+            }
+        }
+
     }
 }
