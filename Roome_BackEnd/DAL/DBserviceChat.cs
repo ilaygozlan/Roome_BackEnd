@@ -2,8 +2,10 @@ using System.Data.SqlClient;
 using System.Data;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.IO;
 using Roome_BackEnd.BL;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Roome_BackEnd.DAL
 {
@@ -19,6 +21,7 @@ namespace Roome_BackEnd.DAL
                 .Build();
         }
 
+        // Opens SQL connection
         public SqlConnection connect()
         {
             string? cStr = configuration.GetConnectionString("myProjDB");
@@ -33,27 +36,60 @@ namespace Roome_BackEnd.DAL
             return con;
         }
 
-        public void AddChatMessage(ChatMessage message)
+        // Adds new chat message, stores it in DB, marks it unread, and sends push notification
+        public async Task AddChatMessage(ChatMessage message)
         {
             using (SqlConnection con = connect())
-            using (SqlCommand cmd = new SqlCommand("sp_AddChatMessage", con))
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
-                cmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
-                cmd.Parameters.AddWithValue("@Content", message.Content);
-                int messageId = Convert.ToInt32(cmd.ExecuteScalar());
+            
 
-            SqlCommand readCmd = new SqlCommand(@"
-            INSERT INTO MessageReads (MessageId, UserId, IsRead)
-            VALUES (@MessageId, @UserId, 0)", con);
-        
-            readCmd.Parameters.AddWithValue("@MessageId", messageId);
-            readCmd.Parameters.AddWithValue("@UserId", message.ToUserId);
-            readCmd.ExecuteNonQuery();                
+                using (SqlCommand cmd = new SqlCommand("sp_AddChatMessage", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
+                    cmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
+                    cmd.Parameters.AddWithValue("@Content", message.Content);
+
+                    // Save message and retrieve the new message ID
+                    int messageId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+                    // Save unread status for the recipient
+                    using (SqlCommand readCmd = new SqlCommand(@"
+                        INSERT INTO MessageReads (MessageId, UserId, IsRead)
+                        VALUES (@MessageId, @UserId, 0)", con))
+                    {
+                        readCmd.Parameters.AddWithValue("@MessageId", messageId);
+                        readCmd.Parameters.AddWithValue("@UserId", message.ToUserId);
+                        await readCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // Get push token of recipient
+                    string pushToken;
+                    using (SqlCommand tokenCmd = new SqlCommand("SELECT Token FROM [User] WHERE ID = @ToUserId", con))
+                    {
+                        tokenCmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
+                        pushToken = (await tokenCmd.ExecuteScalarAsync())?.ToString();
+                    }
+
+                    // Get full name of sender for notification title
+                    string senderName;
+                    using (SqlCommand nameCmd = new SqlCommand("SELECT FullName FROM [User] WHERE ID = @FromUserId", con))
+                    {
+                        nameCmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
+                        senderName = (await nameCmd.ExecuteScalarAsync())?.ToString();
+                    }
+
+                    // Send push notification if token exists
+                    if (!string.IsNullOrEmpty(pushToken))
+                    {
+                        var pushService = new PushNotificationService();
+                        await pushService.SendChatNotification(pushToken, senderName, message.Content);
+                    }
                 }
+            }
         }
 
+        // Returns list of all chat messages between two users
         public List<ChatMessage> GetChatMessages(int user1Id, int user2Id)
         {
             List<ChatMessage> messages = new();
@@ -84,22 +120,25 @@ namespace Roome_BackEnd.DAL
 
             return messages;
         }
-            public void MarkMessagesAsRead(int fromUserId, int toUserId)
-    {
-        using (SqlConnection con = connect())
-        using (SqlCommand cmd = new SqlCommand(@"
-            UPDATE MR
-            SET IsRead = 1
-            FROM MessageReads MR
-            JOIN ChatMessages M ON MR.MessageId = M.Id
-            WHERE MR.UserId = @toUserId AND M.FromUserId = @fromUserId", con))
-        {
-            cmd.Parameters.AddWithValue("@toUserId", toUserId);
-            cmd.Parameters.AddWithValue("@fromUserId", fromUserId);
-            cmd.ExecuteNonQuery();
-        }
-    }
 
+        // Updates unread messages from a specific user to "read"
+        public void MarkMessagesAsRead(int fromUserId, int toUserId)
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand(@"
+                UPDATE MR
+                SET IsRead = 1
+                FROM MessageReads MR
+                JOIN ChatMessages M ON MR.MessageId = M.Id
+                WHERE MR.UserId = @toUserId AND M.FromUserId = @fromUserId", con))
+            {
+                cmd.Parameters.AddWithValue("@toUserId", toUserId);
+                cmd.Parameters.AddWithValue("@fromUserId", fromUserId);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // Returns the chat list for the user, with last message and unread count per conversation
         public List<ChatListItem> GetUserChatList(int userId)
         {
             List<ChatListItem> chatList = new();
@@ -128,6 +167,5 @@ namespace Roome_BackEnd.DAL
 
             return chatList;
         }
-
     }
 }
