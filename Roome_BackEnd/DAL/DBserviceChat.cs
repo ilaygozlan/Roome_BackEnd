@@ -42,9 +42,16 @@ namespace Roome_BackEnd.DAL
                 cmd.Parameters.AddWithValue("@FromUserId", message.FromUserId);
                 cmd.Parameters.AddWithValue("@ToUserId", message.ToUserId);
                 cmd.Parameters.AddWithValue("@Content", message.Content);
+                int messageId = Convert.ToInt32(cmd.ExecuteScalar());
 
-                cmd.ExecuteNonQuery();
-            }
+            SqlCommand readCmd = new SqlCommand(@"
+            INSERT INTO MessageReads (MessageId, UserId, IsRead)
+            VALUES (@MessageId, @UserId, 0)", con);
+        
+            readCmd.Parameters.AddWithValue("@MessageId", messageId);
+            readCmd.Parameters.AddWithValue("@UserId", message.ToUserId);
+            readCmd.ExecuteNonQuery();                
+                }
         }
 
         public List<ChatMessage> GetChatMessages(int user1Id, int user2Id)
@@ -77,6 +84,22 @@ namespace Roome_BackEnd.DAL
 
             return messages;
         }
+            public void MarkMessagesAsRead(int fromUserId, int toUserId)
+    {
+        using (SqlConnection con = connect())
+        using (SqlCommand cmd = new SqlCommand(@"
+            UPDATE MR
+            SET IsRead = 1
+            FROM MessageReads MR
+            JOIN ChatMessages M ON MR.MessageId = M.Id
+            WHERE MR.UserId = @toUserId AND M.FromUserId = @fromUserId", con))
+        {
+            cmd.Parameters.AddWithValue("@toUserId", toUserId);
+            cmd.Parameters.AddWithValue("@fromUserId", fromUserId);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
         public List<ChatListItem> GetUserChatList(int userId)
         {
             List<ChatListItem> chatList = new();
@@ -95,7 +118,8 @@ namespace Roome_BackEnd.DAL
                         {
                             OtherUserId = (int)reader["OtherUserId"],
                             LastMessage = reader["LastMessage"].ToString(),
-                            LastMessageTime = (DateTime)reader["LastMessageTime"]
+                            LastMessageTime = (DateTime)reader["LastMessageTime"],
+                            UnreadCount = reader["UnreadCount"] != DBNull.Value ? (int)reader["UnreadCount"] : 0
                         };
                         chatList.Add(chat);
                     }
