@@ -16,6 +16,13 @@ namespace Roome_BackEnd.Controllers
             dbService = new DBserviceChat();
         }
 
+        [HttpPost("MarkAsRead/{fromUserId}/{toUserId}")]
+        public IActionResult MarkAsRead(int fromUserId, int toUserId)
+        {
+            dbService.MarkMessagesAsRead(fromUserId, toUserId);
+            return Ok();
+        }
+
         [HttpPost("SaveMessage")]
         public IActionResult SaveMessage([FromBody] ChatMessageDto messageDto)
         {
