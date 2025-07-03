@@ -5,6 +5,13 @@ namespace Roome_BackEnd.Hubs
     public static class ConnectionMapping
     {
         private static readonly ConcurrentDictionary<string, HashSet<string>> _connections = new();
+        public static void RemoveAll(string userId)
+        {
+            if (_connections.TryGetValue(userId, out var connections))
+            {
+                connections.Clear();
+            }
+        }
 
         public static void Add(string userId, string connectionId)
         {

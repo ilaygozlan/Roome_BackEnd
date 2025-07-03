@@ -4,18 +4,27 @@ namespace Roome_BackEnd.Hubs
 {
     public class ChatHub : Hub
     {
-        public override async Task OnConnectedAsync()
+       public override async Task OnConnectedAsync()
+{
+    var userId = GetUserIdFromContext();
+
+    if (!string.IsNullOrEmpty(userId))
+    {
+        var existingConnections = ConnectionMapping.GetConnections(userId);
+        foreach (var connId in existingConnections)
         {
-            var userId = GetUserIdFromContext();
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                ConnectionMapping.Add(userId, Context.ConnectionId);
-                Console.WriteLine($"User {userId} connected with ConnectionId {Context.ConnectionId}");
-            }
-
-            await base.OnConnectedAsync();
+            await Clients.Client(connId).SendAsync("ForceDisconnect"); 
         }
+
+        ConnectionMapping.RemoveAll(userId);
+        ConnectionMapping.Add(userId, Context.ConnectionId);
+
+        Console.WriteLine($" User {userId} connected with ConnectionId {Context.ConnectionId}");
+    }
+
+    await base.OnConnectedAsync();
+}
+
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
