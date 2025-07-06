@@ -40,12 +40,27 @@ namespace Roome_BackEnd.BL
             return dbService.CreateAnOpenHouse(openHouse, userId);
         }
 
-
         public static bool RegisterForOpenHouse(int openHouseId, int userId, bool confirmed = false)
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
-            return dbService.RegisterForOpenHouse(openHouseId, userId, confirmed);
+            bool success = dbService.RegisterForOpenHouse(openHouseId, userId, confirmed);
+
+            if (success)
+            {
+                OpenHouse openHouse = dbService.GetOpenHouseById(openHouseId);
+
+                DBserviceUser userDb = new DBserviceUser();
+                string token = userDb.GetToken(userId);
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Task.Run(() => GoogleCalendarService.AddOpenHouseToCalendarAsync(openHouse, token));
+                }
+            }
+
+            return success;
         }
+
 
         public static bool ToggleAttendance(int openHouseId, int userId)
         {
@@ -68,6 +83,11 @@ namespace Roome_BackEnd.BL
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.DeleteRegistrationForOpenHouse(openHouseId, userId);
         }
+public static List<OpenHouse> GetOpenHousesForUser(int userId)
+{
+    DBservicesOpenHouse db = new DBservicesOpenHouse();
+    return db.GetOpenHousesByUser(userId);
+}
 
 
 

@@ -51,18 +51,56 @@ public int GetOwnerId(int openHouseId){
     }
 }
 
-private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, SqlConnection con, int openHouseId)
-{
-    SqlCommand cmd = new SqlCommand
-    {
-        Connection = con,
-        CommandText = spName,
-        CommandTimeout = 10,
-        CommandType = CommandType.StoredProcedure
-    };
-    cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
-    return cmd;
-}
+        private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, SqlConnection con, int openHouseId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+            cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
+            return cmd;
+        }
+        
+        //--------------------------------------------------------------------------------------------------
+        // This method Get Open Houses By User
+        //--------------------------------------------------------------------------------------------------
+
+        public List<OpenHouse> GetOpenHousesByUser(int userId)
+        {
+            List<OpenHouse> openHouses = new List<OpenHouse>();
+
+            using (SqlConnection con = connect())
+            {
+                SqlCommand cmd = new SqlCommand("GetOpenHousesByUser", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@UserID", userId);
+
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    int id = (int)reader["ID"];
+                    int apartmentId = (int)reader["ApartmentID"];
+                    DateTime date = (DateTime)reader["Date"];
+                    int amount = reader["AmountOfPeople"] != DBNull.Value ? (int)reader["AmountOfPeople"] : 0;
+                    string start = ((TimeSpan)reader["StartTime"]).ToString(@"hh\:mm");
+                    string end = ((TimeSpan)reader["EndTime"]).ToString(@"hh\:mm");
+
+                    int totalRegs = 0;
+                    bool isRegistered = false;
+                    bool userConfirmed = false;
+
+                    OpenHouse oh = new OpenHouse(id, apartmentId, date, amount, totalRegs, start, end, isRegistered, userConfirmed);
+                    openHouses.Add(oh);
+                }
+            }
+
+            return openHouses;
+        }
+
         //--------------------------------------------------------------------------------------------------
         // This method creates a new open house
         //--------------------------------------------------------------------------------------------------
@@ -337,7 +375,6 @@ private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, Sql
                 {
                     con.Open();
 
-                    // כיוון שהפרוצדורה מחזירה SELECT עם RowsAffected, אנחנו משתמשים ב- ExecuteScalar()
                     object result = cmd.ExecuteScalar();
                     int rowsAffected = result != null ? Convert.ToInt32(result) : 0;
 
@@ -441,6 +478,9 @@ private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, Sql
             return cmd;
         }
 
-
+        internal OpenHouse GetOpenHouseById(int openHouseId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
