@@ -17,11 +17,11 @@ namespace Roome_BackEnd.BL
         bool smoke;
         bool isActive;
         string token;
-        string jobStatus="";
+        string jobStatus = "";
 
         public User() { }
 
-        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive,string jobStatus,  string token)
+        public User(int id, string email, string fullName, string phoneNumber, char gender, DateTime birthDate, string profilePicture, bool ownPet, bool smoke, bool isActive, string jobStatus, string token)
         {
             ID = id;
             Email = email;
@@ -33,10 +33,10 @@ namespace Roome_BackEnd.BL
             OwnPet = ownPet;
             Smoke = smoke;
             IsActive = isActive;
-            JobStatus=jobStatus;
-            Token= token;
+            JobStatus = jobStatus;
+            Token = token;
         }
-        public string JobStatus{get=>jobStatus;set=>jobStatus=value;}
+        public string JobStatus { get => jobStatus; set => jobStatus = value; }
         public int ID { get => id; set => id = value; }
         public string Email { get => email; set => email = value; }
         public string FullName { get => fullName; set => fullName = value; }
@@ -85,19 +85,19 @@ namespace Roome_BackEnd.BL
         }
 
         public static List<User> GetUserFriends(int userId)
-            {
-                DBserviceUser dBserviecesuser = new DBserviceUser();
-                return dBserviecesuser.GetUserFriends(userId);
-            }
+        {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.GetUserFriends(userId);
+        }
 
         public static string RemoveFriend(int userId1, int userId2)
-            {
-                DBserviceUser dBserviecesuser = new DBserviceUser();
-                return dBserviecesuser.RemoveFriend(userId1, userId2);
-            }
+        {
+            DBserviceUser dBserviecesuser = new DBserviceUser();
+            return dBserviecesuser.RemoveFriend(userId1, userId2);
+        }
 
 
-  
+
 
         public static string LikeApartment(int userId, int apartmentId)
         {
@@ -105,14 +105,14 @@ namespace Roome_BackEnd.BL
             return dBserviceUser.UserLikeApartment(userId, apartmentId);
         }
 
-  
-   public static string RemoveLikeApartment(int userId, int apartmentId)
-   {
-       DBserviceUser dBserviceUser = new DBserviceUser();
-       return dBserviceUser.RemoveUserLikeApartment(userId, apartmentId);
-   }
 
-    public List<dynamic> GetUserLikedApartments(int userId)
+        public static string RemoveLikeApartment(int userId, int apartmentId)
+        {
+            DBserviceUser dBserviceUser = new DBserviceUser();
+            return dBserviceUser.RemoveUserLikeApartment(userId, apartmentId);
+        }
+
+        public List<dynamic> GetUserLikedApartments(int userId)
         {
             if (userId <= 0)
             {
@@ -129,15 +129,29 @@ namespace Roome_BackEnd.BL
             return dbService.GetUserOwnedApartments(userId);
         }
 
-        public static User GetUserById(int userId){
+        public static User GetUserById(int userId)
+        {
             DBserviceUser db = new DBserviceUser();
             User user = db.GetUserById(userId);
             return user;
         }
-        public static int CheckIfUserExists(string email){
-          DBserviceUser db = new DBserviceUser();
+        public static int CheckIfUserExists(string email)
+        {
+            DBserviceUser db = new DBserviceUser();
             return db.CheckIfUserExists(email);
         }
+        public static GoogleToken GetGoogleTokenByUserId(int userId)
+{
+    DBserviceUser db = new DBserviceUser();
+    return db.GetGoogleTokenByUserId(userId);
+}
+
+public static bool SaveGoogleToken(int userId, string accessToken, string refreshToken = null, DateTime? expiry = null)
+{
+    DBserviceUser db = new DBserviceUser();
+    return db.SaveGoogleAccessToken(userId, accessToken, refreshToken, expiry);
+}
+
     }
 
 }
