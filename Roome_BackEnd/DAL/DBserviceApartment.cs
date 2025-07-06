@@ -723,7 +723,7 @@ private SqlCommand CreateCommandWithStoredProcedureGetAllSubletApartments(string
             throw new NotImplementedException();
         }
 // get all active apartments
-   public List<Dictionary<string, object>> GetAllApartmentsForAdmin(int userId)
+   public List<Dictionary<string, object>> GetAllApartmentsForAdmin()
         {
             using (SqlConnection con = connect())
             using (SqlCommand cmd = new SqlCommand("sp_GetAllApartments", con))
