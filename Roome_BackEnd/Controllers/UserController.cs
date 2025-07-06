@@ -252,20 +252,25 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
                 return StatusCode(500, "Failed to retrieve owned apartments.");
             }
         }
- [HttpPost("SaveGoogleToken")]
-public IActionResult SaveGoogleToken(int userId, [FromBody] GoogleToken token)
-{
-    bool result = BL.User.SaveGoogleToken(userId, token.AccessToken, token.RefreshToken, token.Expiry);
-    return result ? Ok() : StatusCode(500, "Failed to save token");
-}
 
-[HttpGet("GetGoogleToken/{userId}")]
-public ActionResult<GoogleToken> GetGoogleToken(int userId)
-{
-    var token = BL.User.GetGoogleTokenByUserId(userId);
-    if (token == null) return NotFound();
-    return Ok(token);
-}
+        // GET: api/User/GetPushToken/5
+        [HttpGet("GetPushToken/{userId}")]
+        public IActionResult GetPushToken(int userId)
+        {
+            try
+            {
+                DBserviceUser db = new DBserviceUser();
+                string token = db.GetToken(userId);
+                if (string.IsNullOrEmpty(token))
+                    return NotFound("Push token not found for this user.");
+
+                return Ok(new { pushToken = token });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
         // POST: api/User/PostPushToken/5
 [HttpPost("PostPushToken")]
