@@ -99,23 +99,77 @@ private SqlCommand CreateCommandWithStoredProcedurePostToken(string spName, SqlC
             }
         }
     }
-    //--------------------------------------------------------------------------------------------------
-    // GetTokenByUserId
-    //--------------------------------------------------------------------------------------------------
-
-  private SqlCommand CreateCommandWithStoredProcedureGetToken(string spName, SqlConnection con, int userId)
+    public GoogleToken GetGoogleTokenByUserId(int userId)
+{
+    using (SqlConnection con = connect())
     {
-        SqlCommand cmd = new SqlCommand
-        {
-            Connection = con,
-            CommandText = spName,
-            CommandTimeout = 10,
-            CommandType = CommandType.StoredProcedure
-        };
-
+        string query = "SELECT AccessToken, RefreshToken, Expiry FROM GoogleTokens WHERE UserId = @UserId";
+        SqlCommand cmd = new SqlCommand(query, con);
         cmd.Parameters.AddWithValue("@UserId", userId);
-        return cmd;
+
+        con.Open();
+        using (SqlDataReader reader = cmd.ExecuteReader())
+        {
+            if (reader.Read())
+            {
+                return new GoogleToken
+                {
+                    UserId = userId,
+                    AccessToken = reader["AccessToken"]?.ToString(),
+                    RefreshToken = reader["RefreshToken"]?.ToString(),
+                    Expiry = reader["Expiry"] != DBNull.Value
+                        ? (DateTime?)Convert.ToDateTime(reader["Expiry"])
+                        : null
+                };
+            }
+        }
     }
+    return null;
+}
+public bool SaveGoogleAccessToken(int userId, string accessToken, string refreshToken = null, DateTime? expiry = null)
+{
+    using (SqlConnection con = connect())
+    {
+        string query = @"
+            IF EXISTS (SELECT 1 FROM GoogleTokens WHERE UserId = @UserId)
+                UPDATE GoogleTokens
+                SET AccessToken = @AccessToken,
+                    RefreshToken = @RefreshToken,
+                    Expiry = @Expiry
+                WHERE UserId = @UserId
+            ELSE
+                INSERT INTO GoogleTokens (UserId, AccessToken, RefreshToken, Expiry)
+                VALUES (@UserId, @AccessToken, @RefreshToken, @Expiry);";
+
+        SqlCommand cmd = new SqlCommand(query, con);
+        cmd.Parameters.AddWithValue("@UserId", userId);
+        cmd.Parameters.AddWithValue("@AccessToken", accessToken);
+        cmd.Parameters.AddWithValue("@RefreshToken", (object)refreshToken ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Expiry", (object)expiry ?? DBNull.Value);
+
+        con.Open();
+        int rows = cmd.ExecuteNonQuery();
+        return rows > 0;
+    }
+}
+
+    //--------------------------------------------------------------------------------------------------
+        // GetTokenByUserId
+        //--------------------------------------------------------------------------------------------------
+
+        private SqlCommand CreateCommandWithStoredProcedureGetToken(string spName, SqlConnection con, int userId)
+        {
+            SqlCommand cmd = new SqlCommand
+            {
+                Connection = con,
+                CommandText = spName,
+                CommandTimeout = 10,
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            return cmd;
+        }
 
     public string GetToken(int userId)
     {
