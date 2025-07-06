@@ -119,7 +119,7 @@ public OpenHouse GetOpenHouseById(int openHouseId)
                     int apartmentId = (int)reader["ApartmentID"];
                     DateTime date = (DateTime)reader["Date"];
                     int amount = reader["AmountOfPeople"] != DBNull.Value ? (int)reader["AmountOfPeople"] : 0;
-                    int totalRegs = reader["TotalRegistrations"] != DBNull.Value ? (int)reader["TotalRegistrations"] : 0;
+                            int totalRegs = 0;
                     string start = ((TimeSpan)reader["StartTime"]).ToString(@"hh\:mm");
                     string end = ((TimeSpan)reader["EndTime"]).ToString(@"hh\:mm");
                     bool isRegistered = false; // Not used in this context
