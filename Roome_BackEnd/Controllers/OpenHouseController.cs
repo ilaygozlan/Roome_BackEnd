@@ -134,15 +134,26 @@ public async Task<IActionResult> RegisterAndSyncToCalendar([FromQuery] int userI
 
         if (!success)
         {
-            Console.WriteLine("[SERVER] Registration failed. Returning BadRequest.");
-            return BadRequest("Failed to register for the open house.");
+            Console.WriteLine("[SERVER] Registration failed. User may already be registered.");
+            return Conflict(new { error = "User already registered or open house is full." });
         }
 
-        OpenHouse openHouse = db.GetOpenHouseById(openHouseId);
+        OpenHouse openHouse;
+        try
+        {
+            openHouse = db.GetOpenHouseById(openHouseId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SERVER] Failed to load open house: {ex.Message}");
+            return StatusCode(500, new { error = "Failed to load open house details." });
+        }
+
         Console.WriteLine($"[SERVER] OpenHouse loaded: ID={openHouse.OpenHouseId}, Date={openHouse.Date}, Time={openHouse.StartTime}-{openHouse.EndTime}");
 
         DBserviceUser userDb = new DBserviceUser();
         string token = userDb.GetToken(userId);
+
         Console.WriteLine($"[SERVER] Retrieved token: {(string.IsNullOrEmpty(token) ? "NULL or empty" : token.Substring(0, 10) + "...")}");
 
         string calendarLink = null;
@@ -157,6 +168,11 @@ public async Task<IActionResult> RegisterAndSyncToCalendar([FromQuery] int userI
             catch (Exception calendarEx)
             {
                 Console.WriteLine($"[SERVER] Error while syncing to calendar: {calendarEx.Message}");
+                return Ok(new
+                {
+                    message = "Registered for the open house, but failed to sync with Google Calendar.",
+                    calendarSyncError = calendarEx.Message
+                });
             }
         }
         else
@@ -173,7 +189,7 @@ public async Task<IActionResult> RegisterAndSyncToCalendar([FromQuery] int userI
     catch (Exception ex)
     {
         Console.WriteLine($"[SERVER] Internal server error: {ex}");
-        return StatusCode(500, $"Internal server error: {ex.Message}");
+        return StatusCode(500, new { error = "Internal server error", details = ex.Message });
     }
 }
 
