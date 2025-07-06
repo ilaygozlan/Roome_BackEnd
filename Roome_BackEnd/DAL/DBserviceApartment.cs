@@ -722,7 +722,35 @@ private SqlCommand CreateCommandWithStoredProcedureGetAllSubletApartments(string
         {
             throw new NotImplementedException();
         }
+// get all active apartments
+   public List<Dictionary<string, object>> GetAllApartmentsForAdmin(int userId)
+        {
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("sp_GetAllApartments", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                
+                
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    var result = new List<Dictionary<string, object>>();
 
+                    while (reader.Read())
+                    {
+                        var row = new Dictionary<string, object>();
+
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        }
+
+                        result.Add(row);
+                    }
+
+                    return result;
+                }
+            }
+        }
         
     }
     

@@ -54,7 +54,11 @@ namespace Roome_BackEnd.BL
             return allApartments;
 
         }
-
+ public static List<Dictionary<string, object>> GetAllApartmentsForAdmin()
+        {
+            DBserviceApartment _dbService = new DBserviceApartment();
+            return _dbService.GetAllApartmentsForAdmin();
+        }
         internal static bool EditApartment(AbstractApartment updatedApartment)
         {
             throw new NotImplementedException();
