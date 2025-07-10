@@ -91,24 +91,7 @@ public IActionResult GetApartmentById (int apartmentId)
             return newApartment.AddApartment();
         }
 
-// PUT toggle active status for any apartment type
-[HttpPut("ToggleActive/{apartmentId}")]
-        public IActionResult ToggleApartmentActiveStatus(int apartmentId)
-        {
 
-            try
-            {
-                if (apartmentId <= 0)
-                    return BadRequest("Invalid Apartment ID.");
-
-                string result = ApartmentService.ToggleApartmentActiveStatus(apartmentId);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal Server Error: {ex.Message}");
-            }
-        }
         //edit shared apartment 
         [HttpPut("EditSharedApartment")]
         public IActionResult EditApartment(SharedApartment apartment){

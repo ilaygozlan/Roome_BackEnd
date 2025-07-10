@@ -60,44 +60,6 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
     }
 
 
-        // GET all users
-        [HttpGet("GetAllUsers")]
-        public ActionResult<List<User>> GETAllUsers()
-        {
-            var users = BL.User.GetAllUser();
-
-            if (users == null || users.Count == 0)
-            {
-                return NotFound("No users found.");
-            }
-
-            return Ok(users);
-        }
-        //Update User activity
-        [HttpPut("DeactivateUser/{userEmail}")]
-        public ActionResult<int> PUTDeactivateUser(string userEmail)
-        {
-            string decodedEmail = Uri.UnescapeDataString(userEmail);
-            Console.WriteLine($"Received userEmail: '{decodedEmail}'");
-
-            int result = BL.User.DeactivateUser(decodedEmail);
-
-            if (result < 0)
-            {
-                Console.WriteLine("Unexpected error occurred.");
-                return StatusCode(500, "Unexpected error occurred.");
-            }
-
-            if (result == 0)
-            {
-                Console.WriteLine("User not found or already deactivated.");
-                return NotFound("User not found or already deactivated.");
-            }
-
-            Console.WriteLine($"User deactivated successfully. Rows affected: {result}");
-            return Ok(result);
-        }
-
 
             //Update User Details
         [HttpPut("UpdateUserDetails")]
@@ -290,20 +252,25 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
                 return StatusCode(500, "Failed to retrieve owned apartments.");
             }
         }
- [HttpPost("SaveGoogleToken")]
-public IActionResult SaveGoogleToken(int userId, [FromBody] GoogleToken token)
-{
-    bool result = BL.User.SaveGoogleToken(userId, token.AccessToken, token.RefreshToken, token.Expiry);
-    return result ? Ok() : StatusCode(500, "Failed to save token");
-}
 
-[HttpGet("GetGoogleToken/{userId}")]
-public ActionResult<GoogleToken> GetGoogleToken(int userId)
-{
-    var token = BL.User.GetGoogleTokenByUserId(userId);
-    if (token == null) return NotFound();
-    return Ok(token);
-}
+        // GET: api/User/GetPushToken/5
+        [HttpGet("GetPushToken/{userId}")]
+        public IActionResult GetPushToken(int userId)
+        {
+            try
+            {
+                DBserviceUser db = new DBserviceUser();
+                string token = db.GetToken(userId);
+                if (string.IsNullOrEmpty(token))
+                    return NotFound("Push token not found for this user.");
+
+                return Ok(new { pushToken = token });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
         // POST: api/User/PostPushToken/5
 [HttpPost("PostPushToken")]

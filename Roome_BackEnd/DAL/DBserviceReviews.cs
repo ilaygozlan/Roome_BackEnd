@@ -3,6 +3,7 @@ using System.Data;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using Roome_BackEnd.BL;
+using System.Dynamic;
 
 namespace Roome_BackEnd.DAL
 {
@@ -177,51 +178,53 @@ namespace Roome_BackEnd.DAL
      //--------------------------------------------------------------------------------------------------
     // This method retrieves all reviews for a specific apartment
     //--------------------------------------------------------------------------------------------------
-    public List<Review> GetReviewsForApartment(int apartmentId)
+    public List<dynamic> GetReviewsForApartment(int apartmentId)
+{
+    if (apartmentId <= 0)
     {
-        if (apartmentId <= 0)
-        {
-            throw new ArgumentException("Invalid apartment ID.");
-        }
+        throw new ArgumentException("Invalid apartment ID.");
+    }
 
-        List<Review> reviews = new List<Review>();
+    List<dynamic> reviews = new List<dynamic>();
 
-        using (SqlConnection con = connect())
-        using (SqlCommand cmd = CreateCommandWithStoredProcedureGetReviews("getReview", con, apartmentId))
+    using (SqlConnection con = connect())
+    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetReviews("getReview", con, apartmentId))
+    {
+        try
         {
-            try
+            Console.WriteLine($"Fetching reviews for Apartment ID={apartmentId}");
+
+            using (SqlDataReader reader = cmd.ExecuteReader())
             {
-                Console.WriteLine($"Fetching reviews for Apartment ID={apartmentId}");
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                while (reader.Read())
                 {
-                    while (reader.Read())
+                    dynamic review = new ExpandoObject();
+                    var dict = (IDictionary<string, object>)review;
+
+                    for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        reviews.Add(new Review
-                        {
-                            ReviewId = reader.GetInt32(reader.GetOrdinal("reviewId")),
-                            ApartmentId = reader.GetInt32(reader.GetOrdinal("ApartmentID")),
-                            Rate = reader.GetInt32(reader.GetOrdinal("rate")),
-                            ReviewText = reader.GetString(reader.GetOrdinal("review")),
-                            UserId = reader.GetInt32(reader.GetOrdinal("UserID"))
-                        });
+                        dict[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
                     }
+
+                    reviews.Add(review);
                 }
             }
-            catch (SqlException sqlEx)
-            {
-                Console.WriteLine($"SQL Error: {sqlEx.Message}");
-                throw new Exception("Database error occurred", sqlEx);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                throw new Exception("Failed to retrieve reviews", ex);
-            }
         }
-
-        return reviews;
+        catch (SqlException sqlEx)
+        {
+            Console.WriteLine($"SQL Error: {sqlEx.Message}");
+            throw new Exception("Database error occurred", sqlEx);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            throw new Exception("Failed to retrieve reviews", ex);
+        }
     }
+
+    return reviews;
+}
+
 
     //---------------------------------------------------------------------------------
     // Create the SqlCommand using a stored procedure to get all reviews for an apartment

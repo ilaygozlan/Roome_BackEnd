@@ -47,25 +47,26 @@ namespace Roome_BackEnd.Controllers{
         }
 
 
-          //Get Reviews For Apartment
-            [HttpGet("GetReviewsForApartment/{apartmentId}")]
-            public ActionResult<List<Review>> GetReviewsForApartment(int apartmentId)
-            {
-                if (apartmentId <= 0)
-                {
-                    return BadRequest("Invalid apartment ID.");
-                }
+         // Get Reviews For Apartment
+[HttpGet("GetReviewsForApartment/{apartmentId}")]
+public ActionResult<List<dynamic>> GetReviewsForApartment(int apartmentId)
+{
+    if (apartmentId <= 0)
+    {
+        return BadRequest("Invalid apartment ID.");
+    }
 
-                Review review = new Review();
-                List<Review> reviews = review.GetReviewsForApartment(apartmentId);
+    Review review = new Review();
+    List<dynamic> reviews = review.GetReviewsForApartment(apartmentId);
 
-                if (reviews == null || reviews.Count == 0)
-                {
-                    return NotFound("No reviews found for this apartment.");
-                }
+    if (reviews == null || reviews.Count == 0)
+    {
+        return NotFound("No reviews found for this apartment.");
+    }
 
-                return Ok(reviews);
-            }
+    return Ok(reviews);
+}
+
 
     }
 }
