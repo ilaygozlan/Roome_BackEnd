@@ -124,7 +124,7 @@ public IActionResult GetApartmentById (int apartmentId)
         //edit sublet apartment 
         [HttpPut("EditSubletApartment")]
         public IActionResult EditSublet(SubletApartment apartment){
-        bool result = ApartmentService.EditApartment(apartment);
+        bool result = ApartmentService.editApartment(apartment);
         return Ok(result);
         }
 
