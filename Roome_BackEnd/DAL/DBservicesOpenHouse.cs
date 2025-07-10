@@ -29,27 +29,28 @@ namespace Roome_BackEnd.DAL
 
             return new SqlConnection(cStr);
         }
-                //--------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------
         // This method Get Owner Id
         //--------------------------------------------------------------------------------------------------
 
-public int GetOwnerId(int openHouseId){
-    using (SqlConnection con = connect())
-    using (SqlCommand cmd = CreateCommandWithStoredProcedureGetOwnerId("sp_GetOwnerId", con, openHouseId))
-    {
-        try
+        public int GetOwnerId(int openHouseId)
         {
-            con.Open();
-            object result = cmd.ExecuteScalar();
-            return Convert.ToInt32(result);
-            
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureGetOwnerId("sp_GetOwnerId", con, openHouseId))
+            {
+                try
+                {
+                    con.Open();
+                    object result = cmd.ExecuteScalar();
+                    return Convert.ToInt32(result);
+
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Error retrieving owner ID", ex);
+                }
+            }
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Error retrieving owner ID", ex);
-        }
-    }
-}
 
         private SqlCommand CreateCommandWithStoredProcedureGetOwnerId(string spName, SqlConnection con, int openHouseId)
         {
@@ -63,80 +64,79 @@ public int GetOwnerId(int openHouseId){
             cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
             return cmd;
         }
-        
+
         //--------------------------------------------------------------------------------------------------
         // This method Get Open Houses By User
         //--------------------------------------------------------------------------------------------------
-
-        public List<OpenHouse> GetOpenHousesByUser(int userId)
+        public List<dynamic> GetOpenHousesByUser(int userId)
         {
-            List<OpenHouse> openHouses = new List<OpenHouse>();
+            var openHouses = new List<dynamic>();
 
             using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("GetOpenHousesByUser", con))
             {
-                SqlCommand cmd = new SqlCommand("GetOpenHousesByUser", con);
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@UserID", userId);
 
                 con.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    int id = (int)reader["ID"];
-                    int apartmentId = (int)reader["ApartmentID"];
-                    DateTime date = (DateTime)reader["Date"];
-                    int amount = reader["AmountOfPeople"] != DBNull.Value ? (int)reader["AmountOfPeople"] : 0;
-                    string start = ((TimeSpan)reader["StartTime"]).ToString(@"hh\:mm");
-                    string end = ((TimeSpan)reader["EndTime"]).ToString(@"hh\:mm");
+                    while (reader.Read())
+                    {
+                        var row = new System.Dynamic.ExpandoObject() as IDictionary<string, object>;
 
-                    int totalRegs = 0;
-                    bool isRegistered = false;
-                    bool userConfirmed = false;
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            string columnName = reader.GetName(i);
+                            object value = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                            row[columnName] = value;
+                        }
 
-                    OpenHouse oh = new OpenHouse(id, apartmentId, date, amount, totalRegs, start, end, isRegistered, userConfirmed);
-                    openHouses.Add(oh);
+                        openHouses.Add(row);
+                    }
                 }
             }
 
             return openHouses;
         }
-public OpenHouse GetOpenHouseById(int openHouseId)
-{
-    using (SqlConnection con = connect())
-    using (SqlCommand cmd = new SqlCommand("sp_GetOpenHouseById", con))
-    {
-        cmd.CommandType = CommandType.StoredProcedure;
-        cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
 
-        try
+        public OpenHouse GetOpenHouseById(int openHouseId)
         {
-            con.Open();
-            using (SqlDataReader reader = cmd.ExecuteReader())
+            using (SqlConnection con = connect())
+            using (SqlCommand cmd = new SqlCommand("sp_GetOpenHouseById", con))
             {
-                if (reader.Read())
-                {
-                    int id = (int)reader["OpenHouseID"];
-                    int apartmentId = (int)reader["ApartmentID"];
-                    DateTime date = (DateTime)reader["Date"];
-                    int amount = reader["AmountOfPeople"] != DBNull.Value ? (int)reader["AmountOfPeople"] : 0;
-                            int totalRegs = 0;
-                    string start = ((TimeSpan)reader["StartTime"]).ToString(@"hh\:mm");
-                    string end = ((TimeSpan)reader["EndTime"]).ToString(@"hh\:mm");
-                    bool isRegistered = false; // Not used in this context
-                    bool userConfirmed = false; // Not used in this context
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
 
-                    return new OpenHouse(id, apartmentId, date, amount, totalRegs, start, end, isRegistered, userConfirmed);
+                try
+                {
+                    con.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            int id = (int)reader["OpenHouseID"];
+                            int apartmentId = (int)reader["ApartmentID"];
+                            DateTime date = (DateTime)reader["Date"];
+                            int amount = reader["AmountOfPeople"] != DBNull.Value ? (int)reader["AmountOfPeople"] : 0;
+                            int totalRegs = 0;
+                            string start = ((TimeSpan)reader["StartTime"]).ToString(@"hh\:mm");
+                            string end = ((TimeSpan)reader["EndTime"]).ToString(@"hh\:mm");
+                            bool isRegistered = false; // Not used in this context
+                            bool userConfirmed = false; // Not used in this context
+
+                            return new OpenHouse(id, apartmentId, date, amount, totalRegs, start, end, isRegistered, userConfirmed);
+                        }
+                    }
+
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Failed to retrieve open house by ID", ex);
                 }
             }
-
-            return null;
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to retrieve open house by ID", ex);
-        }
-    }
-}
 
         //--------------------------------------------------------------------------------------------------
         // This method creates a new open house
@@ -248,7 +248,7 @@ public OpenHouse GetOpenHouseById(int openHouseId)
                                 amountOfPeoples,
                                 TotalRegistrations,
                                 start.ToString(@"hh\:mm"),
-                                end.ToString(@"hh\:mm"), 
+                                end.ToString(@"hh\:mm"),
                                 isRegistered,
                                 userConfirmed
                             );
@@ -505,7 +505,7 @@ public OpenHouse GetOpenHouseById(int openHouseId)
             cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
             cmd.Parameters.AddWithValue("@UserID", userId);
 
-     
+
             SqlParameter returnParameter = new SqlParameter("@ReturnVal", SqlDbType.Int)
             {
                 Direction = ParameterDirection.ReturnValue

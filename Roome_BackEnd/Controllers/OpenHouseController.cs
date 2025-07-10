@@ -39,23 +39,23 @@ namespace Roome_BackEnd.Controllers
         //---------------------------------------------------------------------------------
         // This method Get Owner Id
         //---------------------------------------------------------------------------------
-[HttpGet("GetOwnerId/{openHouseId}")]
-public IActionResult GetOwnerId(int openHouseId)
-{
-    try
-    {
-        int ownerId = OpenHouse.GetOwnerId(openHouseId);
-        
-        if(ownerId <= 0)
-            return NotFound("Owner not found for this open house event.");
+        [HttpGet("GetOwnerId/{openHouseId}")]
+        public IActionResult GetOwnerId(int openHouseId)
+        {
+            try
+            {
+                int ownerId = OpenHouse.GetOwnerId(openHouseId);
 
-        return Ok(ownerId);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"Internal server error: {ex.Message}");
-    }
-}
+                if (ownerId <= 0)
+                    return NotFound("Owner not found for this open house event.");
+
+                return Ok(ownerId);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
 
         //---------------------------------------------------------------------------------
@@ -104,115 +104,116 @@ public IActionResult GetOwnerId(int openHouseId)
         // This method Get Open Houses By User
         //---------------------------------------------------------------------------------
         [HttpGet("getByUser/{userId}")]
-            public IActionResult GetOpenHousesByUser(int userId)
+        public IActionResult GetOpenHousesByUser(int userId)
+        {
+            try
             {
-                try
-                {
-                    var openHouses = OpenHouse.GetOpenHousesForUser(userId);
-                    return Ok(openHouses);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Internal server error: {ex.Message}");
-                }
+                List<dynamic> openHouses = OpenHouse.GetOpenHousesForUser(userId);
+                return Ok(openHouses);
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
 
 
         //---------------------------------------------------------------------------------
         // This method Register And Sync To Calendar
         //---------------------------------------------------------------------------------
-[HttpPost("RegisterAndSyncToCalendar")]
-public async Task<IActionResult> RegisterAndSyncToCalendar([FromQuery] int userId, [FromQuery] int openHouseId)
-{
-    Console.WriteLine($"[SERVER] Starting RegisterAndSyncToCalendar for userId={userId}, openHouseId={openHouseId}");
-
-    try
-    {
-        DBservicesOpenHouse db = new DBservicesOpenHouse();
-        bool success = db.RegisterForOpenHouse(openHouseId, userId, confirmed: true);
-        Console.WriteLine($"[SERVER] Registration result: {success}");
-
-        if (!success)
+        [HttpPost("RegisterAndSyncToCalendar")]
+        public async Task<IActionResult> RegisterAndSyncToCalendar([FromQuery] int userId, [FromQuery] int openHouseId)
         {
-            Console.WriteLine("[SERVER] Registration failed. User may already be registered.");
-            return Conflict(new { error = "User already registered or open house is full." });
-        }
+            Console.WriteLine($"[SERVER] Starting RegisterAndSyncToCalendar for userId={userId}, openHouseId={openHouseId}");
 
-        OpenHouse openHouse;
-        try
-        {
-            openHouse = db.GetOpenHouseById(openHouseId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[SERVER] Failed to load open house: {ex.Message}");
-            return StatusCode(500, new { error = "Failed to load open house details." });
-        }
-
-        Console.WriteLine($"[SERVER] OpenHouse loaded: ID={openHouse.OpenHouseId}, Date={openHouse.Date}, Time={openHouse.StartTime}-{openHouse.EndTime}");
-
-        DBserviceUser userDb = new DBserviceUser();
-        string token = userDb.GetToken(userId);
-
-        Console.WriteLine($"[SERVER] Retrieved token: {(string.IsNullOrEmpty(token) ? "NULL or empty" : token.Substring(0, 10) + "...")}");
-
-        string calendarLink = null;
-
-        if (!string.IsNullOrEmpty(token))
-        {
             try
             {
-                calendarLink = await GoogleCalendarService.AddOpenHouseToCalendarAsync(openHouse, token);
-                Console.WriteLine($"[SERVER] Calendar event created. Link: {calendarLink}");
-            }
-            catch (Exception calendarEx)
-            {
-                Console.WriteLine($"[SERVER] Error while syncing to calendar: {calendarEx.Message}");
+                DBservicesOpenHouse db = new DBservicesOpenHouse();
+                bool success = db.RegisterForOpenHouse(openHouseId, userId, confirmed: true);
+                Console.WriteLine($"[SERVER] Registration result: {success}");
+
+                if (!success)
+                {
+                    Console.WriteLine("[SERVER] Registration failed. User may already be registered.");
+                    return Conflict(new { error = "User already registered or open house is full." });
+                }
+
+                OpenHouse openHouse;
+                try
+                {
+                    openHouse = db.GetOpenHouseById(openHouseId);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SERVER] Failed to load open house: {ex.Message}");
+                    return StatusCode(500, new { error = "Failed to load open house details." });
+                }
+
+                Console.WriteLine($"[SERVER] OpenHouse loaded: ID={openHouse.OpenHouseId}, Date={openHouse.Date}, Time={openHouse.StartTime}-{openHouse.EndTime}");
+
+                DBserviceUser userDb = new DBserviceUser();
+                string token = userDb.GetToken(userId);
+
+                Console.WriteLine($"[SERVER] Retrieved token: {(string.IsNullOrEmpty(token) ? "NULL or empty" : token.Substring(0, 10) + "...")}");
+
+                string calendarLink = null;
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    try
+                    {
+                        calendarLink = await GoogleCalendarService.AddOpenHouseToCalendarAsync(openHouse, token);
+                        Console.WriteLine($"[SERVER] Calendar event created. Link: {calendarLink}");
+                    }
+                    catch (Exception calendarEx)
+                    {
+                        Console.WriteLine($"[SERVER] Error while syncing to calendar: {calendarEx.Message}");
+                        return Ok(new
+                        {
+                            message = "Registered for the open house, but failed to sync with Google Calendar.",
+                            calendarSyncError = calendarEx.Message
+                        });
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[SERVER] No token found for user. Skipping calendar sync.");
+                }
+
                 return Ok(new
                 {
-                    message = "Registered for the open house, but failed to sync with Google Calendar.",
-                    calendarSyncError = calendarEx.Message
+                    message = "Registration successful and event synced to Google Calendar.",
+                    calendarEventLink = calendarLink
                 });
             }
-        }
-        else
-        {
-            Console.WriteLine("[SERVER] No token found for user. Skipping calendar sync.");
-        }
-
-        return Ok(new
-        {
-            message = "Registration successful and event synced to Google Calendar.",
-            calendarEventLink = calendarLink
-        });
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[SERVER] Internal server error: {ex}");
-        return StatusCode(500, new { error = "Internal server error", details = ex.Message });
-    }
-}
-
-            //---------------------------------------------------------------------------------
-            // This method Toggle Attendance for open house
-            //---------------------------------------------------------------------------------
-            [HttpPut("ToggleAttendance/{openHouseId}/{userId}")]
-            public ActionResult<string> ToggleAttendance([FromRoute] int openHouseId, [FromRoute] int userId)
+            catch (Exception ex)
             {
-                if (openHouseId <= 0 || userId <= 0)
-                {
-                    return BadRequest("Invalid Open House ID or User ID.");
-                }
-
-                bool result = OpenHouse.ToggleAttendance(openHouseId, userId);
-
-                if (!result)
-                {
-                    return Conflict("Failed to update attendance status.");
-                }
-
-                return Ok("Attendance status updated successfully.");
+                Console.WriteLine($"[SERVER] Internal server error: {ex}");
+                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
             }
+        }
+
+        //---------------------------------------------------------------------------------
+        // This method Toggle Attendance for open house
+        //---------------------------------------------------------------------------------
+        [HttpPut("ToggleAttendance/{openHouseId}/{userId}")]
+        public ActionResult<string> ToggleAttendance([FromRoute] int openHouseId, [FromRoute] int userId)
+        {
+            if (openHouseId <= 0 || userId <= 0)
+            {
+                return BadRequest("Invalid Open House ID or User ID.");
+            }
+
+            bool result = OpenHouse.ToggleAttendance(openHouseId, userId);
+
+            if (!result)
+            {
+                return Conflict("Failed to update attendance status.");
+            }
+
+            return Ok("Attendance status updated successfully.");
+        }
 
         // DELETE: Delete open house
         [HttpDelete("DeleteOpenHouse/{openHouseId}/{userId}")]

@@ -72,7 +72,7 @@ namespace Roome_BackEnd.BL
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.DeleteOpenHouse(openHouseId, userId);
-        }        
+        }
         public static int GetOwnerId(int openHouseId)
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
@@ -83,11 +83,11 @@ namespace Roome_BackEnd.BL
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.DeleteRegistrationForOpenHouse(openHouseId, userId);
         }
-public static List<OpenHouse> GetOpenHousesForUser(int userId)
-{
-    DBservicesOpenHouse db = new DBservicesOpenHouse();
-    return db.GetOpenHousesByUser(userId);
-}
+        public static List<dynamic> GetOpenHousesForUser(int userId)
+        {
+            DBservicesOpenHouse db = new DBservicesOpenHouse();
+            return db.GetOpenHousesByUser(userId); // מחזיר List<dynamic>
+        }
 
 
 
