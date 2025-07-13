@@ -38,26 +38,45 @@ public ActionResult<object> PostAddNewUser([FromBody] User newUser)
 }
 
 
-       
     // GET: api/User/CheckIfExists?email=example@email.com
-    [HttpGet("CheckIfExists")]
-    public ActionResult<object> CheckIfUserExists([FromQuery] string email)
+[HttpGet("CheckIfExists")]
+public ActionResult<object> CheckIfUserExists([FromQuery] string email)
+{
+    try
     {
-        try
-        {
-            int userId = BL.User.CheckIfUserExists(email);
+        int userId = BL.User.CheckIfUserExists(email);
 
-            return Ok(new
-            {
-                userId = userId,
-                exists = userId != -1
-            });
-        }
-        catch (Exception ex)
+        string status;
+        bool exists;
+
+        if (userId == -1)
         {
-            return StatusCode(500, "Server error: " + ex.Message);
+            status = "not_found";
+            exists = false;
         }
+        else if (userId == -2)
+        {
+            status = "inactive";
+            exists = true;
+        }
+        else
+        {
+            status = "active";
+            exists = true;
+        }
+
+        return Ok(new
+        {
+            userId = userId,
+            exists = exists,
+            status = status
+        });
     }
+    catch (Exception ex)
+    {
+        return StatusCode(500, "Server error: " + ex.Message);
+    }
+}
 
 
 
