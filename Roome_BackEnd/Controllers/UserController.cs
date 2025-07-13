@@ -11,115 +11,115 @@ namespace Roome_BackEnd.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-// GET user by ID
+        // GET user by ID
         [HttpGet("GetUserById/{id}")]
         public ActionResult<User> GETUserById(int id)
         {
             var user = BL.User.GetUser(id);
-            if(id < 0) 
+            if (id < 0)
                 return NotFound("No users found.");
-            else 
-                return Ok(user);  
-        }
+            else
+                return Ok(user);
+        }
 
         // POST add new user to DB
-[HttpPost("AddNewUser")]
-public ActionResult<object> PostAddNewUser([FromBody] User newUser)
-{
-    var (userId, isNew) = BL.User.AddUser(newUser);
-
-    var resJson = new
-    {
-        userId = userId,
-        isNewUser = isNew
-    };
-
-    return Ok(resJson);
-}
-
-
-    // GET: api/User/CheckIfExists?email=example@email.com
-[HttpGet("CheckIfExists")]
-public ActionResult<object> CheckIfUserExists([FromQuery] string email)
-{
-    try
-    {
-        int userId = BL.User.CheckIfUserExists(email);
-
-        string status;
-        bool exists;
-
-        if (userId == -1)
+        [HttpPost("AddNewUser")]
+        public ActionResult<object> PostAddNewUser([FromBody] User newUser)
         {
-            status = "not_found";
-            exists = false;
-        }
-        else if (userId == -2)
-        {
-            status = "inactive";
-            exists = true;
-        }
-        else
-        {
-            status = "active";
-            exists = true;
+            var (userId, isNew) = BL.User.AddUser(newUser);
+
+            var resJson = new
+            {
+                userId = userId,
+                isNewUser = isNew
+            };
+
+            return Ok(resJson);
         }
 
-        return Ok(new
+
+        // GET: api/User/CheckIfExists?email=example@email.com
+        [HttpGet("CheckIfExists")]
+        public ActionResult<object> CheckIfUserExists([FromQuery] string email)
         {
-            userId = userId,
-            exists = exists,
-            status = status
-        });
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, "Server error: " + ex.Message);
-    }
-}
+            try
+            {
+                int userId = BL.User.CheckIfUserExists(email);
+
+                string status;
+                bool exists;
+
+                if (userId == -1)
+                {
+                    status = "not_found";
+                    exists = false;
+                }
+                else if (userId == -2)
+                {
+                    status = "inactive";
+                    exists = true;
+                }
+                else
+                {
+                    status = "active";
+                    exists = true;
+                }
+
+                return Ok(new
+                {
+                    userId = userId,
+                    exists = exists,
+                    status = status
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Server error: " + ex.Message);
+            }
+        }
 
 
 
-            //Update User Details
+        //Update User Details
         [HttpPut("UpdateUserDetails")]
-            public ActionResult<int> PUTUserDetails([FromBody] User user)
+        public ActionResult<int> PUTUserDetails([FromBody] User user)
+        {
+            if (user.ID <= 0)
             {
-                if (user.ID <= 0)
-                {
-                    return BadRequest("User ID is required.");
-                }
-
-                int result = BL.User.UpdateUserDetailsById(user);
-
-                if (result == 0)
-                {
-                    return NotFound("No changes made or user not found.");
-                }
-
-                Console.WriteLine($"User details updated successfully. Rows affected: {result}");
-                return Ok(result);
+                return BadRequest("User ID is required.");
             }
 
-            [HttpGet("GetRecommendedApartments/{userId}")]
-            public ActionResult<List<dynamic>> GetRecommendedApartments(int userId)
+            int result = BL.User.UpdateUserDetailsById(user);
+
+            if (result == 0)
             {
-                if (userId <= 0)
-                    return BadRequest("Invalid user ID.");
-
-                try
-                {
-                    var recommendations = RecommendationService.GetHybridRecommendations(userId);
-
-                    if (recommendations == null || recommendations.Count == 0)
-                        return NotFound("No recommended apartments found.");
-
-                    return Ok(recommendations);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Error generating recommendations: {ex.Message}");
-                }
+                return NotFound("No changes made or user not found.");
             }
+
+            Console.WriteLine($"User details updated successfully. Rows affected: {result}");
+            return Ok(result);
+        }
+
+        [HttpGet("GetRecommendedApartments/{userId}")]
+        public ActionResult<List<dynamic>> GetRecommendedApartments(int userId)
+        {
+            if (userId <= 0)
+                return BadRequest("Invalid user ID.");
+
+            try
+            {
+                var recommendations = RecommendationService.GetHybridRecommendations(userId);
+
+                if (recommendations == null || recommendations.Count == 0)
+                    return NotFound("No recommended apartments found.");
+
+                return Ok(recommendations);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error generating recommendations: {ex.Message}");
+            }
+        }
 
 
 
@@ -292,49 +292,50 @@ public ActionResult<object> CheckIfUserExists([FromQuery] string email)
         }
 
         // POST: api/User/PostPushToken/5
-[HttpPost("PostPushToken")]
-public IActionResult PostPushToken([FromBody] User user)
-{
-    try
-    {
-        DBserviceUser db = new DBserviceUser();
-        int rowsAffected = db.PostToken(user.ID, user.Token);
-        if (rowsAffected > 0)
-            return Ok("Push token inserted successfully.");
-        else
-            return BadRequest("Failed to insert push token.");
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"Internal server error: {ex.Message}");
-    }
-}
+        [HttpPost("PostPushToken")]
+        public IActionResult PostPushToken([FromBody] User user)
+        {
+            try
+            {
+                DBserviceUser db = new DBserviceUser();
+                int rowsAffected = db.PostToken(user.ID, user.Token);
+                if (rowsAffected > 0)
+                    return Ok("Push token inserted successfully.");
+                else
+                    return BadRequest("Failed to insert push token.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
 
 
         // PUT: api/User/UpdatePushToken/5
- [HttpPut("UpdatePushToken/{userId}")]
-public IActionResult UpdatePushToken(int userId, [FromBody] User user)
-{
-    try
-    {
-        if (string.IsNullOrWhiteSpace(user.Token))
-            return BadRequest("Token is required.");
+        [HttpPut("UpdatePushToken/{userId}")]
+        public IActionResult UpdatePushToken(int userId, [FromBody] User user)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(user.Token))
+                    return BadRequest("Token is required.");
 
-        DBserviceUser db = new DBserviceUser();
-        string currentToken = db.GetToken(userId);
+                DBserviceUser db = new DBserviceUser();
+                string currentToken = db.GetToken(userId);
 
-        int rowsAffected = string.IsNullOrEmpty(currentToken)
-            ? db.PostToken(userId, user.Token)
-            : db.UpdateToken(userId, user.Token);
+                int rowsAffected = string.IsNullOrEmpty(currentToken)
+                    ? db.PostToken(userId, user.Token)
+                    : db.UpdateToken(userId, user.Token);
 
-        return rowsAffected > 0 ? Ok("Push token updated successfully.")
-                                : BadRequest("Failed to update push token.");
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"Internal server error: {ex.Message}");
+                return rowsAffected > 0 ? Ok("Push token updated successfully.")
+                                        : BadRequest("Failed to update push token.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
     }
 }
-
-}}
