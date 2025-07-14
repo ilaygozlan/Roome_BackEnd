@@ -43,7 +43,6 @@ namespace Roome_BackEnd.DAL
             {
                 try
                 {
-                    cmd.ExecuteNonQuery();
                     int rowsAffected = cmd.ExecuteNonQuery();
                     if (rowsAffected >= 0)
                     {
@@ -123,7 +122,6 @@ namespace Roome_BackEnd.DAL
 
                 try
                 {
-                    con.Open();
                     int rowsAffected = cmd.ExecuteNonQuery();
                     return rowsAffected > 0;
                 }
