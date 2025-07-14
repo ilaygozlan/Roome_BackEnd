@@ -123,6 +123,7 @@ namespace Roome_BackEnd.DAL
 
                 try
                 {
+                    con.Open();
                     int rowsAffected = cmd.ExecuteNonQuery();
                     return rowsAffected > 0;
                 }
