@@ -60,9 +60,8 @@ namespace Roome_BackEnd.Controllers
 
         //---------------------------------------------------------------------------------
         // This method creates a new open house event
-        //---------------------------------------------------------------------------------
-        [HttpPost("create/{userId}")]
-        public ActionResult<int> CreateNewOpenHouse([FromBody] OpenHouse openHouse, [FromRoute] int userId)
+        [HttpPost("CreateNewOpenHouse/{userId}")]
+        public ActionResult<object> CreateNewOpenHouse([FromBody] OpenHouse openHouse, [FromRoute] int userId)
         {
             if (userId <= 0)
             {
@@ -76,8 +75,9 @@ namespace Roome_BackEnd.Controllers
                 return Conflict("Open house already exists or failed to create.");
             }
 
-            return Ok(newOpenHouseId); 
+            return Ok(new { id = newOpenHouseId, message = "Open house created successfully" });
         }
+
 
 
 
