@@ -86,7 +86,7 @@ namespace Roome_BackEnd.BL
         public static List<dynamic> GetOpenHousesForUser(int userId)
         {
             DBservicesOpenHouse db = new DBservicesOpenHouse();
-            return db.GetOpenHousesByUser(userId); // מחזיר List<dynamic>
+            return db.GetOpenHousesByUser(userId); 
         }
 
 

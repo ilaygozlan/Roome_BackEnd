@@ -151,15 +151,22 @@ namespace Roome_BackEnd.DAL
                 {
                     con.Open();
 
-                    SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+                    // פרמטרים לפלט
+                    SqlParameter outputRowsParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
                     {
                         Direction = ParameterDirection.Output
                     };
-                    cmd.Parameters.Add(outputParam);
+                    cmd.Parameters.Add(outputRowsParam);
+
+                    SqlParameter outputIdParam = new SqlParameter("@NewOpenHouseID", SqlDbType.Int)
+                    {
+                        Direction = ParameterDirection.Output
+                    };
+                    cmd.Parameters.Add(outputIdParam);
 
                     cmd.ExecuteNonQuery();
 
-                    int rowsAffected = outputParam.Value != DBNull.Value ? Convert.ToInt32(outputParam.Value) : 0;
+                    int rowsAffected = outputRowsParam.Value != DBNull.Value ? Convert.ToInt32(outputRowsParam.Value) : 0;
 
                     if (rowsAffected == 0)
                     {
@@ -167,8 +174,9 @@ namespace Roome_BackEnd.DAL
                         return 0;
                     }
 
-                    Console.WriteLine($"Open House created successfully. Rows affected: {rowsAffected}");
-                    return rowsAffected;
+                    int newId = outputIdParam.Value != DBNull.Value ? Convert.ToInt32(outputIdParam.Value) : 0;
+                    Console.WriteLine($"✅ Open House created successfully. New ID: {newId}");
+                    return newId;
                 }
                 catch (SqlException ex)
                 {

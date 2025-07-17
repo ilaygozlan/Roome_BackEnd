@@ -6,7 +6,6 @@ namespace Roome_BackEnd.BL
 {
     public class RoommateMatchingService
     {
-        // ממיר את ה-preferences לווקטור מספרי
         public static RoommatePreferenceVector ConvertToVector(RoommatePreferences pref)
         {
             return new RoommatePreferenceVector
@@ -39,7 +38,6 @@ namespace Roome_BackEnd.BL
             };
         }
 
-        // מחשב דמיון (מרחק) בין שני משתמשים
         public static double CalculateSimilarity(RoommatePreferenceVector v1, RoommatePreferenceVector v2)
         {
             double wSmoking = 3;

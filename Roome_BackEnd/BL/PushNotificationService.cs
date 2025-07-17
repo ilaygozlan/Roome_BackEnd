@@ -19,7 +19,7 @@ public class PushNotificationService
             {
                 type = "chat",
                 sender = senderName,
-                recipientId = fromUserId // <-- זהו השדה שהאפליקציה שלך מחפשת!
+                recipientId = fromUserId 
             }
         };
 
