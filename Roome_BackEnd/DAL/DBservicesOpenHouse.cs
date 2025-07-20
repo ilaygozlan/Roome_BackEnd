@@ -510,9 +510,11 @@ namespace Roome_BackEnd.DAL
 
             cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
             cmd.Parameters.AddWithValue("@UserID", userId);
+            SqlParameter returnParameter = new SqlParameter("@ReturnVal", SqlDbType.Int);
+            returnParameter.Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(returnParameter);
 
 
-           
 
             return cmd;
         }
