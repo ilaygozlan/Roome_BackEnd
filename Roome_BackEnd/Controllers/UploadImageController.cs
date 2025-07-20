@@ -66,7 +66,38 @@ namespace Roome_BackEnd.Controllers
             {
                 return NotFound("Image not found or could not be deleted");
             }
-        }
 
+
+        }
+        [HttpPost("uploadImageProfile")]
+        public async Task<IActionResult> Post([FromForm] List<IFormFile> files)
+        {
+
+            List<string> imageLinks = new List<string>();
+
+            string path = System.IO.Directory.GetCurrentDirectory();
+
+            long size = files.Sum(f => f.Length);
+
+            foreach (var formFile in files)
+            {
+                if (formFile.Length > 0)
+                {
+                    var filePath = Path.Combine(path, "uploadedFiles/" + formFile.FileName);
+
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await formFile.CopyToAsync(stream);
+                    }
+                    imageLinks.Add(formFile.FileName);
+                }
+            }
+
+            if (files.Count == 0) { return NotFound(); }
+
+            // Return status code  
+            return Ok(imageLinks);
+
+        }
     }
 }

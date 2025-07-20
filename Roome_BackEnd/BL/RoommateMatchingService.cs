@@ -72,7 +72,7 @@ namespace Roome_BackEnd.BL
             return Math.Sqrt(sum);
         }
 
-        // הפונקציה המרכזית: מקבלת K ומחזירה את ה-K הכי מתאימים
+       
         public List<RoommatePreferences> GetBestMatches(RoommatePreferences userPref, List<RoommatePreferences> allUsers, int k)
         {
             var userVector = ConvertToVector(userPref);
