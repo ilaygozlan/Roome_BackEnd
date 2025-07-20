@@ -151,7 +151,7 @@ namespace Roome_BackEnd.DAL
                 {
                     con.Open();
 
-                    // פרמטרים לפלט
+                  
                     SqlParameter outputRowsParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
                     {
                         Direction = ParameterDirection.Output
@@ -285,41 +285,35 @@ namespace Roome_BackEnd.DAL
         //--------------------------------------------------------------------------------------------------
         // This method registers a user for an open house
         //--------------------------------------------------------------------------------------------------
-        public bool RegisterForOpenHouse(int openHouseId, int userId, bool confirmed = false)
+        public bool RegisterForOpenHouse(int openHouseId, int userId)
         {
             using (SqlConnection con = connect())
-            using (SqlCommand cmd = CreateCommandWithStoredProcedureRegisterForOpenHouse("sp_RegisterForOpenHouse", con, openHouseId, userId, confirmed))
+            using (SqlCommand cmd = CreateCommandWithStoredProcedureRegisterForOpenHouse("sp_RegisterForOpenHouse", con, openHouseId, userId))
             {
                 try
                 {
+
                     con.Open();
-
-                    SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
-                    {
-                        Direction = ParameterDirection.Output
-                    };
-                    cmd.Parameters.Add(outputParam);
-
-                    object result = cmd.ExecuteScalar();
-                    int rowsAffected = outputParam.Value != DBNull.Value ? Convert.ToInt32(outputParam.Value) : 0;
+                    cmd.ExecuteNonQuery();
+                    int rowsAffected = Convert.ToInt32(cmd.Parameters["@RowsAffected"].Value);
 
                     if (rowsAffected <= 0)
                     {
-                        Console.WriteLine($"Failed to register user {userId} for Open House {openHouseId}. Reason: {result}");
+                        Console.WriteLine($"❌ Failed to register user {userId} for Open House {openHouseId}.");
                         return false;
                     }
 
-                    Console.WriteLine($"User {userId} registered successfully for Open House {openHouseId}. Rows affected: {rowsAffected}");
+                    Console.WriteLine($"✅ User {userId} registered successfully for Open House {openHouseId}. Rows affected: {rowsAffected}");
                     return true;
                 }
                 catch (SqlException ex)
                 {
-                    Console.WriteLine($"SQL Error: {ex.Message}");
+                    Console.WriteLine($"❌ SQL Error: {ex.Message}");
                     throw new Exception("Database error occurred", ex);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
+                    Console.WriteLine($"❌ Error: {ex.Message}");
                     throw new Exception("Failed to register for open house", ex);
                 }
             }
@@ -329,7 +323,7 @@ namespace Roome_BackEnd.DAL
         //--------------------------------------------------------------------------------------------------
         // Create the SqlCommand using a stored procedure to register a user for an open house
         //--------------------------------------------------------------------------------------------------
-        private SqlCommand CreateCommandWithStoredProcedureRegisterForOpenHouse(string spName, SqlConnection con, int openHouseId, int userId, bool confirmed)
+        private SqlCommand CreateCommandWithStoredProcedureRegisterForOpenHouse(string spName, SqlConnection con, int openHouseId, int userId)
         {
             SqlCommand cmd = new SqlCommand
             {
@@ -341,10 +335,14 @@ namespace Roome_BackEnd.DAL
 
             cmd.Parameters.AddWithValue("@OpenHouseID", openHouseId);
             cmd.Parameters.AddWithValue("@UserID", userId);
-            cmd.Parameters.AddWithValue("@Confirmed", Convert.ToInt32(confirmed));
-
+            SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(outputParam);
             return cmd;
         }
+
         //--------------------------------------------------------------------------------------------------
         // This method Toggle Attendance for open house
         //--------------------------------------------------------------------------------------------------
@@ -514,11 +512,7 @@ namespace Roome_BackEnd.DAL
             cmd.Parameters.AddWithValue("@UserID", userId);
 
 
-            SqlParameter returnParameter = new SqlParameter("@ReturnVal", SqlDbType.Int)
-            {
-                Direction = ParameterDirection.ReturnValue
-            };
-            cmd.Parameters.Add(returnParameter);
+           
 
             return cmd;
         }

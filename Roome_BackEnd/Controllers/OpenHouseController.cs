@@ -92,7 +92,7 @@ namespace Roome_BackEnd.Controllers
                 return BadRequest("Invalid user ID or open house ID.");
             }
 
-            bool success = OpenHouse.RegisterForOpenHouse(request.OpenHouseID, request.UserID, request.Confirmed);
+            bool success = OpenHouse.RegisterForOpenHouse(request.OpenHouseID, request.UserID);
 
             if (!success)
             {
@@ -131,7 +131,7 @@ namespace Roome_BackEnd.Controllers
             try
             {
                 DBservicesOpenHouse db = new DBservicesOpenHouse();
-                bool success = db.RegisterForOpenHouse(openHouseId, userId, confirmed: true);
+                bool success = db.RegisterForOpenHouse(openHouseId, userId);
                 Console.WriteLine($"[SERVER] Registration result: {success}");
 
                 if (!success)
@@ -261,6 +261,6 @@ namespace Roome_BackEnd.Controllers
     {
         public int OpenHouseID { get; set; }
         public int UserID { get; set; }
-        public bool Confirmed { get; set; } = false;
+        public int Confirmed { get; set; }
     }
 }

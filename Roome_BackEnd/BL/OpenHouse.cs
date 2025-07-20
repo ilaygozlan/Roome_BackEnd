@@ -40,10 +40,10 @@ namespace Roome_BackEnd.BL
             return dbService.CreateAnOpenHouse(openHouse, userId);
         }
 
-        public static bool RegisterForOpenHouse(int openHouseId, int userId, bool confirmed = false)
+        public static bool RegisterForOpenHouse(int openHouseId, int userId)
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
-            bool success = dbService.RegisterForOpenHouse(openHouseId, userId, confirmed);
+            bool success = dbService.RegisterForOpenHouse(openHouseId, userId);
 
             if (success)
             {

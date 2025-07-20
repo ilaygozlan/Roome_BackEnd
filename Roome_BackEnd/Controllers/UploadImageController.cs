@@ -45,7 +45,7 @@ namespace Roome_BackEnd.Controllers
             string imageUrlsCsv = string.Join(",", imageLinks);
             object uploadedImages = ApartmantImages.UploadImages(imageUrlsCsv, apartmentId);
 
-            return Ok(uploadedImages);
+            return Ok(imageUrlsCsv);
         }
         [HttpDelete("deleteApartmentImage")]
         public IActionResult DeleteImage([FromQuery] string imageUrl)
