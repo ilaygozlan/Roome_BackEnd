@@ -12,7 +12,7 @@ namespace Roome_BackEnd.Controllers
         // This method returns all open house events for a specific apartment
         //---------------------------------------------------------------------------------
         [HttpGet("GetOpenHousesByApartment/{apartmentId}/{userId}")]
-        public ActionResult<List<OpenHouse>> GetOpenHousesByApartment([FromRoute] int apartmentId, int userId)
+        public ActionResult<List<dynamic>> GetOpenHousesByApartment([FromRoute] int apartmentId, int userId)
         {
             if (apartmentId <= 0)
             {
@@ -21,7 +21,7 @@ namespace Roome_BackEnd.Controllers
 
             try
             {
-                List<OpenHouse> openHouses = OpenHouse.GetOpenHousesForApartment(apartmentId, userId);
+                List<dynamic> openHouses = OpenHouse.GetOpenHousesForApartment(apartmentId, userId);
 
                 if (openHouses == null || openHouses.Count == 0)
                 {

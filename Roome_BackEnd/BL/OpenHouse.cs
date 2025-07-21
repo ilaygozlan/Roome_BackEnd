@@ -29,7 +29,7 @@ namespace Roome_BackEnd.BL
             UserConfirmed = userConfirmed;
         }
 
-        public static List<OpenHouse> GetOpenHousesForApartment(int aptId, int userId)
+        public static List<dynamic> GetOpenHousesForApartment(int aptId, int userId)
         {
             DBservicesOpenHouse dbService = new DBservicesOpenHouse();
             return dbService.GetOpenHousesForApartment(aptId, userId);

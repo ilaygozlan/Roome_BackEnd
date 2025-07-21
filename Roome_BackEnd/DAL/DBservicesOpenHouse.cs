@@ -151,7 +151,7 @@ namespace Roome_BackEnd.DAL
                 {
                     con.Open();
 
-                  
+
                     SqlParameter outputRowsParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
                     {
                         Direction = ParameterDirection.Output
@@ -220,10 +220,9 @@ namespace Roome_BackEnd.DAL
         //--------------------------------------------------------------------------------------------------
         // This method get all the open houses per apartment
         //--------------------------------------------------------------------------------------------------
-
-        public List<OpenHouse> GetOpenHousesForApartment(int apartmentId, int userId)
+        public List<dynamic> GetOpenHousesForApartment(int apartmentId, int userId)
         {
-            List<OpenHouse> openHouses = new List<OpenHouse>();
+            List<dynamic> openHouses = new List<dynamic>();
 
             using (SqlConnection con = connect())
             using (SqlCommand cmd = new SqlCommand("sp_GetOpenHousesByApartment", con))
@@ -231,6 +230,7 @@ namespace Roome_BackEnd.DAL
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@ApartmentID", apartmentId);
                 cmd.Parameters.AddWithValue("@UserID", userId);
+
                 try
                 {
                     con.Open();
@@ -238,29 +238,15 @@ namespace Roome_BackEnd.DAL
                     {
                         while (reader.Read())
                         {
-                            int openHouseId = reader.GetInt32(reader.GetOrdinal("OpenHouseID"));
-                            int aptId = reader.GetInt32(reader.GetOrdinal("ApartmentID"));
-                            DateTime date = reader.GetDateTime(reader.GetOrdinal("Date"));
-                            int amountOfPeoples = reader.GetInt32(reader.GetOrdinal("AmountOfPeople"));
-                            int TotalRegistrations = reader.GetInt32(reader.GetOrdinal("TotalRegistrations"));
-                            TimeSpan start = reader.GetTimeSpan(reader.GetOrdinal("StartTime"));
-                            TimeSpan end = reader.GetTimeSpan(reader.GetOrdinal("EndTime"));
-                            bool isRegistered = reader.GetBoolean(reader.GetOrdinal("IsRegistered"));
-                            bool userConfirmed = reader.GetBoolean(reader.GetOrdinal("UserConfirmed"));
+                            dynamic openHouse = new ExpandoObject();
+                            var dict = (IDictionary<string, object>)openHouse;
 
-
-                            OpenHouse openHouse = new OpenHouse(
-                                openHouseId,
-                                aptId,
-                                date,
-                                amountOfPeoples,
-                                TotalRegistrations,
-                                start.ToString(@"hh\:mm"),
-                                end.ToString(@"hh\:mm"),
-                                isRegistered,
-                                userConfirmed
-                            );
-
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                string columnName = reader.GetName(i);
+                                object value = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                                dict[columnName] = value;
+                            }
 
                             openHouses.Add(openHouse);
                         }
@@ -280,7 +266,6 @@ namespace Roome_BackEnd.DAL
 
             return openHouses;
         }
-
 
         //--------------------------------------------------------------------------------------------------
         // This method registers a user for an open house
